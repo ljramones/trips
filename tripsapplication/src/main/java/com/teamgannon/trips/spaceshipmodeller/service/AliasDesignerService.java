@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -97,6 +98,44 @@ public class AliasDesignerService {
                 .filter(e -> activeIds.contains(e.getUniverseId()))
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    /**
+     * Phase F.2 §6.1 — renderer-tooltip-shaped query. Returns aliases for the target whose
+     * universe is currently active, each paired with the universe's display name so the
+     * renderer can format "{aliasText} ({universeName})" without a second per-alias round
+     * trip.
+     *
+     * <p>Same short-circuit + filtering shape as {@link #findActiveAliasesForTarget} — the
+     * difference is the return type, which carries both pieces of information the tooltip
+     * needs. The renderer calls this on every mouse-enter (F1.b dynamic per-hover), so it
+     * must remain cheap: a single repository query covered by the {@code idx_alias_target}
+     * V18 index + a single universe bulk fetch via {@link UniverseFilteringService}.
+     *
+     * @return aliases-with-universe-name pairs for this target whose universe is currently
+     *         active; empty list if none
+     */
+    public List<AliasDisplay> findActiveAliasesForTooltip(AliasTargetKind kind, String targetId) {
+        Map<String, String> activeIdToName = filteringService.getActiveUniverseNamesById();
+        if (activeIdToName.isEmpty()) {
+            return List.of();
+        }
+        return repository.findByTargetKindAndTargetId(kind, targetId).stream()
+                .filter(e -> activeIdToName.containsKey(e.getUniverseId()))
+                .map(e -> new AliasDisplay(e.getAliasText(), activeIdToName.get(e.getUniverseId())))
+                .toList();
+    }
+
+    /**
+     * Renderer-facing projection of an Alias plus its owning universe's display name. Used by
+     * the F.2 §6.1 format-α tooltip to render lines like "Vulcan (Star Trek)" without the
+     * renderer having to make a second round trip per alias to resolve the universe name.
+     *
+     * @param aliasText            the fictional name attached to the target
+     * @param universeDisplayName  the human-readable name of the alias's universe (parenthetical
+     *                             attribution in the tooltip)
+     */
+    public record AliasDisplay(String aliasText, String universeDisplayName) {
     }
 
     // --------------------------------------------------------------- writes

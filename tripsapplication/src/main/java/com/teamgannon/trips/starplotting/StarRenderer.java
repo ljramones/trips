@@ -4,6 +4,10 @@ import com.teamgannon.trips.config.application.model.ColorPalette;
 import com.teamgannon.trips.config.application.model.StarDisplayPreferences;
 import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService.AliasDisplay;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasTooltipFormatter;
+import com.terranrepublic.assets.AliasTargetKind;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -16,6 +20,7 @@ import javafx.scene.shape.MeshView;
 import javafx.scene.shape.Shape3D;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +35,13 @@ import java.util.function.BiConsumer;
 @Slf4j
 public class StarRenderer {
 
-    static final String TOOLTIP_INSTALLED_PROPERTY = "trips.star.tooltipInstalled";
+    /**
+     * Property key for the {@link Tooltip} attached to a star node. Phase F.2 §6.1 — the
+     * separate {@code TOOLTIP_INSTALLED} flag from the pre-F.2 cached-tooltip pattern is
+     * gone; F1.b uses a single persistent Tooltip per node whose text is refreshed on every
+     * mouse-enter via {@link Tooltip#setText(String)}, so the property's mere presence is
+     * what indicates installation.
+     */
     static final String TOOLTIP_PROPERTY = "trips.star.tooltip";
 
     /**
@@ -72,6 +83,14 @@ public class StarRenderer {
     private final StarClickHandler clickHandler;
 
     /**
+     * F.2 §6.1 alias lookup. May be {@code null} when the renderer is constructed in a context
+     * without Spring (existing tests, pre-F.2 callers). When null, hover tooltips fall back to
+     * "{starName}\nPolity: {polity}" with no alias lines appended.
+     */
+    @Nullable
+    private final AliasDesignerService aliasService;
+
+    /**
      * Callback to register label with current plot.
      */
     private BiConsumer<String, Label> labelRegistrar;
@@ -82,12 +101,24 @@ public class StarRenderer {
                         SpecialStarMeshManager meshManager,
                         PolityObjectFactory polityObjectFactory,
                         StarClickHandler clickHandler) {
+        this(lodManager, labelManager, scaleManager, meshManager, polityObjectFactory,
+                clickHandler, null);
+    }
+
+    public StarRenderer(StarLODManager lodManager,
+                        StarLabelManager labelManager,
+                        InterstellarScaleManager scaleManager,
+                        SpecialStarMeshManager meshManager,
+                        PolityObjectFactory polityObjectFactory,
+                        StarClickHandler clickHandler,
+                        @Nullable AliasDesignerService aliasService) {
         this.lodManager = lodManager;
         this.labelManager = labelManager;
         this.scaleManager = scaleManager;
         this.meshManager = meshManager;
         this.polityObjectFactory = polityObjectFactory;
         this.clickHandler = clickHandler;
+        this.aliasService = aliasService;
     }
 
     /**
@@ -210,9 +241,10 @@ public class StarRenderer {
     }
 
     /**
-     * Installs a tooltip lazily and sets up hover glow effects.
-     * The tooltip is only created when user first hovers over the node.
-     * The glow effect highlights both the star and its associated label.
+     * Installs a tooltip and sets up hover glow effects. Phase F.2 §6.1 — F1.b dynamic
+     * per-hover: the Tooltip instance is reused per node, but its text is rebuilt from the
+     * current alias state on every mouse-enter so universe activation changes surface
+     * immediately on the next hover. The glow effect highlights both the star and its label.
      *
      * @param node   the star node
      * @param record the star record
@@ -230,18 +262,15 @@ public class StarRenderer {
         final double originalScaleZ = node.getScaleZ();
 
         node.setOnMouseEntered(event -> {
-            // Install tooltip lazily on first hover
-            if (node.getProperties().get(TOOLTIP_INSTALLED_PROPERTY) == null) {
-                String polity = record.getPolity();
-                if (polity.equals("NA")) {
-                    polity = "Non-Aligned";
-                }
-                Tooltip tooltip = new Tooltip(record.getStarName() + "::" + polity);
+            // F1.b dynamic per-hover: rebuild tooltip text from current alias state
+            Tooltip tooltip = (Tooltip) node.getProperties().get(TOOLTIP_PROPERTY);
+            if (tooltip == null) {
+                tooltip = new Tooltip();
                 Tooltip.install(node, tooltip);
                 node.getProperties().put(TOOLTIP_PROPERTY, tooltip);
-                node.getProperties().put(TOOLTIP_INSTALLED_PROPERTY, Boolean.TRUE);
                 log.trace("Installed tooltip for star: {}", record.getStarName());
             }
+            tooltip.setText(buildStarTooltipText(record));
 
             // Apply glow effect to star
             node.setEffect(glowEffect);
@@ -271,6 +300,23 @@ public class StarRenderer {
                 highlightLabel(label, false);
             }
         });
+    }
+
+    /**
+     * Builds the F.2 §6.1 format-α tooltip text for a star — star name on line 1, polity on
+     * line 2, then one line per active alias formatted as "{aliasText} ({universeName})".
+     * Pure aside from the alias service call; the formatter itself is unit-tested separately.
+     *
+     * <p>If {@link #aliasService} is null (test contexts or non-Spring callers) or no active
+     * universes have aliased this star, the result is just the first two lines — preserving
+     * the legacy "name + polity" payload in a clean multi-line shape.
+     */
+    @NotNull
+    String buildStarTooltipText(@NotNull StarDisplayRecord record) {
+        List<AliasDisplay> aliases = (aliasService == null)
+                ? List.of()
+                : aliasService.findActiveAliasesForTooltip(AliasTargetKind.STAR, record.getRecordId());
+        return AliasTooltipFormatter.formatStarTooltip(record.getStarName(), record.getPolity(), aliases);
     }
 
     /**

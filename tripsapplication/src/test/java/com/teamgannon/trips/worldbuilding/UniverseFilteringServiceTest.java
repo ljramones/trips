@@ -149,6 +149,47 @@ class UniverseFilteringServiceTest {
         assertEquals("Troy", visible.get(1).name());
     }
 
+    // ============================================================
+    // getActiveUniverseNamesById — F.2 §6.1
+    // ============================================================
+
+    @Test
+    @DisplayName("getActiveUniverseNamesById returns empty map when no universes active")
+    void activeNamesEmptyWhenNoneActive() {
+        when(universeService.findAllActive()).thenReturn(List.of());
+        assertTrue(filteringService.getActiveUniverseNamesById().isEmpty());
+    }
+
+    @Test
+    @DisplayName("getActiveUniverseNamesById keys by id with name as value")
+    void activeNamesKeyedById() {
+        Universe trek = new Universe("u-trek", "Star Trek", "", "", "1.0", UniverseLifecycle.AVAILABLE, true);
+        Universe cotp = new Universe("u-cotp", "Children of the Pattern", "", "", "1.0", UniverseLifecycle.AVAILABLE, true);
+        when(universeService.findAllActive()).thenReturn(List.of(trek, cotp));
+
+        java.util.Map<String, String> result = filteringService.getActiveUniverseNamesById();
+
+        assertEquals(2, result.size());
+        assertEquals("Star Trek", result.get("u-trek"));
+        assertEquals("Children of the Pattern", result.get("u-cotp"));
+    }
+
+    @Test
+    @DisplayName("getActiveUniverseNamesById skips inactive universes (findAllActive contract)")
+    void activeNamesSkipsInactive() {
+        // findAllActive is contractually filtered upstream; the service trusts that filter.
+        // This test documents that contract — only the active ones come through.
+        when(universeService.findAllActive())
+                .thenReturn(List.of(universe("u-active", true)));
+        // override the name for clarity
+        Universe withName = new Universe("u-active", "ActiveOne", "", "", "1.0", UniverseLifecycle.AVAILABLE, true);
+        when(universeService.findAllActive()).thenReturn(List.of(withName));
+
+        java.util.Map<String, String> result = filteringService.getActiveUniverseNamesById();
+        assertEquals(1, result.size());
+        assertEquals("ActiveOne", result.get("u-active"));
+    }
+
     @Test
     @DisplayName("filter preserves source order within the visible subset")
     void filterPreservesOrder() {

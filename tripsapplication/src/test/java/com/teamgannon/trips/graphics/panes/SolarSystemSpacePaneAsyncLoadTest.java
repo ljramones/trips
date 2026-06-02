@@ -51,7 +51,8 @@ class SolarSystemSpacePaneAsyncLoadTest extends TestFXBase {
                 mock(ApplicationEventPublisher.class),
                 mock(DatabaseManagementService.class),
                 solarSystemService,
-                new SolarSystemContextMenuFactory());
+                new SolarSystemContextMenuFactory(),
+                null);  // F.2: aliasService — null disables alias tooltip lines (test context)
 
         stage.setScene(new Scene(pane, 800, 600));
         stage.show();

@@ -13,8 +13,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService.AliasDisplay;
+
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -129,6 +132,68 @@ class AliasDesignerServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(AliasTargetKind.EXOPLANET, result.get(0).targetKind());
+    }
+
+    // ============================================================
+    // findActiveAliasesForTooltip (F.2 §6.1 — renderer-tooltip-shaped projection)
+    // ============================================================
+
+    @Test
+    @DisplayName("findActiveAliasesForTooltip returns empty list when no universes are active")
+    void tooltipReturnsEmptyWhenNoneActive() {
+        when(filteringService.getActiveUniverseNamesById()).thenReturn(Map.of());
+        List<AliasDisplay> result = service.findActiveAliasesForTooltip(AliasTargetKind.STAR, "star-1");
+        assertTrue(result.isEmpty());
+        // Short-circuit — repository must not be queried per F.2 §6.1 per-hover efficiency
+        verify(repository, never()).findByTargetKindAndTargetId(any(), any());
+    }
+
+    @Test
+    @DisplayName("findActiveAliasesForTooltip pairs each active-universe alias with its universe display name")
+    void tooltipPairsAliasWithUniverseName() {
+        AliasEntity trekAlias = entityFor("a1", "u-trek", AliasTargetKind.STAR, "star-1", "Vulcan");
+        AliasEntity cotpAlias = entityFor("a2", "u-cotp", AliasTargetKind.STAR, "star-1", "Akane's");
+        AliasEntity inactiveAlias = entityFor("a3", "u-foundation", AliasTargetKind.STAR, "star-1", "Terminus-adjacent");
+
+        when(filteringService.getActiveUniverseNamesById()).thenReturn(Map.of(
+                "u-trek", "Star Trek",
+                "u-cotp", "Children of the Pattern"));
+        when(repository.findByTargetKindAndTargetId(AliasTargetKind.STAR, "star-1"))
+                .thenReturn(List.of(trekAlias, cotpAlias, inactiveAlias));
+
+        List<AliasDisplay> result = service.findActiveAliasesForTooltip(AliasTargetKind.STAR, "star-1");
+
+        assertEquals(2, result.size());
+        assertTrue(result.stream().anyMatch(d ->
+                "Vulcan".equals(d.aliasText()) && "Star Trek".equals(d.universeDisplayName())));
+        assertTrue(result.stream().anyMatch(d ->
+                "Akane's".equals(d.aliasText()) && "Children of the Pattern".equals(d.universeDisplayName())));
+        assertTrue(result.stream().noneMatch(d -> "Terminus-adjacent".equals(d.aliasText())),
+                "inactive-universe alias must NOT appear in tooltip output");
+    }
+
+    @Test
+    @DisplayName("findActiveAliasesForTooltip routes exoplanet kind to the exoplanet path")
+    void tooltipRoutesExoplanetKind() {
+        when(filteringService.getActiveUniverseNamesById()).thenReturn(Map.of("u-trek", "Star Trek"));
+        when(repository.findByTargetKindAndTargetId(AliasTargetKind.EXOPLANET, "ep-1"))
+                .thenReturn(List.of(entityFor("a1", "u-trek", AliasTargetKind.EXOPLANET, "ep-1", "Vulcan-IV")));
+
+        List<AliasDisplay> result = service.findActiveAliasesForTooltip(AliasTargetKind.EXOPLANET, "ep-1");
+
+        assertEquals(1, result.size());
+        assertEquals("Vulcan-IV", result.get(0).aliasText());
+        assertEquals("Star Trek", result.get(0).universeDisplayName());
+    }
+
+    @Test
+    @DisplayName("findActiveAliasesForTooltip returns empty when target has no aliases at all")
+    void tooltipEmptyWhenNoAliasesForTarget() {
+        when(filteringService.getActiveUniverseNamesById()).thenReturn(Map.of("u-trek", "Star Trek"));
+        when(repository.findByTargetKindAndTargetId(AliasTargetKind.STAR, "no-such-star"))
+                .thenReturn(List.of());
+        List<AliasDisplay> result = service.findActiveAliasesForTooltip(AliasTargetKind.STAR, "no-such-star");
+        assertTrue(result.isEmpty());
     }
 
     // ============================================================

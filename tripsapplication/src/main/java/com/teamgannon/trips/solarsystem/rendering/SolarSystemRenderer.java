@@ -222,6 +222,18 @@ public class SolarSystemRenderer {
     }
 
     /**
+     * F.2 §6.1 — push the alias lookup so {@link BodyRenderer}'s per-hover tooltips can
+     * include alias lines. Mirrors {@link #setContextMenuHandler}'s pattern: setter forwards
+     * to {@link BodyRenderer}; SolarSystemRenderer itself doesn't currently consume the
+     * service, but the forwarding keeps a single injection point for the pane.
+     */
+    public void setAliasService(com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService aliasService) {
+        if (bodyRenderer != null) {
+            bodyRenderer.setAliasService(aliasService);
+        }
+    }
+
+    /**
      * Reference to the current star being rendered (for context menu)
      */
     private StarDisplayRecord currentStar;

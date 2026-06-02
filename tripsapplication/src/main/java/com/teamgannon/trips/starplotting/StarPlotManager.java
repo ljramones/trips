@@ -16,6 +16,7 @@ import com.teamgannon.trips.routing.RouteFindingService;
 import com.teamgannon.trips.routing.dialogs.ContextManualRoutingDialog;
 import com.teamgannon.trips.service.SolarSystemService;
 import com.teamgannon.trips.service.StarService;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService;
 import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -154,7 +155,8 @@ public class StarPlotManager {
                            SolarSystemService solarSystemService,
                            RouteFindingService routeFindingService,
                            StarContextMenuHandler contextMenuHandler,
-                           ApplicationEventPublisher eventPublisher) {
+                           ApplicationEventPublisher eventPublisher,
+                           AliasDesignerService aliasService) {
 
         this.tripsContext = tripsContext;
         this.colorPalette = tripsContext.getAppViewPreferences().getColorPalette();
@@ -172,10 +174,11 @@ public class StarPlotManager {
         // Initialize click handler
         this.clickHandler = new StarClickHandler(contextMenuHandler, this::createContextMenuForStar);
 
-        // Initialize star renderer
+        // Initialize star renderer — F.2 §6.1: aliasService wired through so per-hover
+        // tooltips can surface universe-scoped alias lines.
         this.starRenderer = new StarRenderer(
                 lodManager, labelManager, scaleManager, meshManager,
-                polityObjectFactory, clickHandler
+                polityObjectFactory, clickHandler, aliasService
         );
 
         // Initialize star highlighter

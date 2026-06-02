@@ -100,6 +100,20 @@ public class UniverseFilteringService {
     }
 
     /**
+     * Returns a {@code Map<universeId, universeName>} for all currently-active universes. Phase
+     * F.2 §6.1 — the renderer tooltip needs to display the universe's human-readable name
+     * alongside each alias text ("Vulcan (Star Trek)"), and {@code AliasDesignerService}
+     * shouldn't make a second round trip per hover to resolve names. Single bulk-fetch.
+     *
+     * @return a map keyed by universe id with the display name as value; empty if no
+     *         universes are active
+     */
+    public java.util.Map<String, String> getActiveUniverseNamesById() {
+        return universeService.findAllActive().stream()
+                .collect(Collectors.toMap(Universe::id, Universe::name));
+    }
+
+    /**
      * Bulk-filters a collection by universe visibility. O(N) after a single bulk-fetch of the
      * active-universe id set; preserves source order.
      *

@@ -137,7 +137,8 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
                                 ApplicationEventPublisher eventPublisher,
                                 DatabaseManagementService databaseManagementService,
                                 SolarSystemService solarSystemService,
-                                SolarSystemContextMenuFactory contextMenuFactory) {
+                                SolarSystemContextMenuFactory contextMenuFactory,
+                                com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService aliasService) {
 
         this.tripsContext = tripsContext;
         this.eventPublisher = eventPublisher;
@@ -151,6 +152,9 @@ public class SolarSystemSpacePane extends Pane implements SolarSystemContextMenu
 
         // Set up context menu handler
         this.solarSystemRenderer.setContextMenuHandler(this);
+
+        // F.2 §6.1 — wire alias lookup for per-hover tooltips on planets + companion stars.
+        this.solarSystemRenderer.setAliasService(aliasService);
 
         // Add the system entity group to world (will hold rendered solar system)
         world.getChildren().add(systemEntityGroup);

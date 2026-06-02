@@ -310,7 +310,6 @@ class StarNodePoolTest {
                 sphere.setEffect(new Glow(0.5));
                 sphere.setCursor(Cursor.HAND);
                 sphere.getProperties().put(StarRenderer.TOOLTIP_PROPERTY, tooltip);
-                sphere.getProperties().put(StarRenderer.TOOLTIP_INSTALLED_PROPERTY, Boolean.TRUE);
                 sphere.getProperties().put("custom-state", "old");
 
                 sphere.setOnMouseClicked(event -> { });

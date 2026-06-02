@@ -4,6 +4,10 @@ import com.teamgannon.trips.graphics.entities.StarDisplayRecord;
 import com.teamgannon.trips.model.PlanetDescription;
 import com.teamgannon.trips.solarsystem.SolarSystemContextMenuHandler;
 import com.teamgannon.trips.solarsystem.orbits.OrbitSamplingProvider;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService.AliasDisplay;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasTooltipFormatter;
+import com.terranrepublic.assets.AliasTargetKind;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Tooltip;
@@ -14,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Sphere;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +76,23 @@ public final class BodyRenderer {
     private boolean showOrbitNodes = false;
     private boolean showApsides = false;
 
+    /**
+     * F.2 §6.1 alias lookup for renderer tooltips. Pushed via {@link #setAliasService} by
+     * {@code SolarSystemRenderer.setAliasService}, which in turn is called by
+     * {@code SolarSystemSpacePane} during Spring construction. May remain null in
+     * test contexts and pre-F.2 callers — when null, tooltips fall back to the legacy
+     * planet/star metadata only.
+     */
+    @Nullable
+    private AliasDesignerService aliasService;
+
+    /**
+     * Tooltip-per-node property key for the F1.b dynamic per-hover pattern. The tooltip
+     * instance is reused per node, but its text is rebuilt on every mouse-enter so universe
+     * activation changes surface immediately on the next hover.
+     */
+    private static final String TOOLTIP_PROPERTY = "trips.solarsystem.tooltip";
+
     public BodyRenderer(ScaleManager scaleManager,
                         OrbitVisualizer orbitVisualizer,
                         OrbitSamplingProvider orbitSamplingProvider,
@@ -109,6 +131,16 @@ public final class BodyRenderer {
 
     public void setContextMenuHandler(SolarSystemContextMenuHandler handler) {
         this.contextMenuHandler = handler;
+    }
+
+    /**
+     * F.2 §6.1 — push the alias lookup so per-hover tooltips can include alias lines. Setter
+     * (not constructor arg) mirrors {@link #setContextMenuHandler}'s pattern: the renderer is
+     * a plain class with a long constructor signature, and additional renderer-time
+     * collaborators arrive via setters rather than bloating the ctor.
+     */
+    public void setAliasService(@Nullable AliasDesignerService aliasService) {
+        this.aliasService = aliasService;
     }
 
     public void setShowOrbits(boolean showOrbits) {
@@ -160,8 +192,11 @@ public final class BodyRenderer {
             starSphere.setTranslateZ(0);
         }
 
-        Tooltip.install(starSphere, new Tooltip("%s\nSpectral: %s\nDistance: %.2f ly".formatted(
-                star.getStarName(), star.getSpectralClass(), star.getDistance())));
+        // F.2 §6.1 — F1.b dynamic per-hover: tooltip rebuilt on each mouse-enter so
+        // universe activation changes surface immediately. recordId is used as the alias
+        // target id when the star carries one (set at SolarSystemDescription assembly).
+        installDynamicTooltip(starSphere, () ->
+                buildStarTooltipText(star));
 
         starSphere.setUserData(star);
         starSphere.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
@@ -347,12 +382,11 @@ public final class BodyRenderer {
         planetSphere.setTranslateY(position[1]);
         planetSphere.setTranslateZ(position[2]);
 
-        Tooltip.install(planetSphere, new Tooltip(String.format(
-                "%s\nSemi-major axis: %.3f AU\nPeriod: %.1f days\nRadius: %.2f Earth",
-                planet.getName(),
-                planet.getSemiMajorAxis(),
-                planet.getOrbitalPeriod(),
-                planet.getRadius())));
+        // F.2 §6.1 — F1.b dynamic per-hover: tooltip rebuilt on each mouse-enter so
+        // universe activation + alias changes surface immediately. PlanetDescription.id is
+        // the ExoPlanet entity id (UUID-based), matching the AliasEntity.targetId domain.
+        installDynamicTooltip(planetSphere, () ->
+                buildPlanetTooltipText(planet));
 
         planetSphere.setUserData(planet);
         planetSphere.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
@@ -382,6 +416,55 @@ public final class BodyRenderer {
         }
 
         return planetRadius;
+    }
+
+    // ----- F.2 §6.1 tooltip helpers -----
+
+    /**
+     * Install a dynamic tooltip on the given node: a single {@link Tooltip} instance per
+     * node, with text rebuilt from {@code textSupplier} on every mouse-enter. F1.b per-hover
+     * pattern — universe activation + alias mutations surface immediately on next hover
+     * without any cache invalidation.
+     */
+    private void installDynamicTooltip(Node node, java.util.function.Supplier<String> textSupplier) {
+        node.setOnMouseEntered(event -> {
+            Tooltip tooltip = (Tooltip) node.getProperties().get(TOOLTIP_PROPERTY);
+            if (tooltip == null) {
+                tooltip = new Tooltip();
+                Tooltip.install(node, tooltip);
+                node.getProperties().put(TOOLTIP_PROPERTY, tooltip);
+            }
+            tooltip.setText(textSupplier.get());
+        });
+    }
+
+    /**
+     * Build the F.2 §6.1 format-α tooltip text for a solar-system view star. Falls back to
+     * the legacy "name + spectral + distance" payload when no alias service is wired.
+     */
+    String buildStarTooltipText(StarDisplayRecord star) {
+        List<AliasDisplay> aliases = (aliasService == null || star.getRecordId() == null)
+                ? List.of()
+                : aliasService.findActiveAliasesForTooltip(AliasTargetKind.STAR, star.getRecordId());
+        return AliasTooltipFormatter.formatSolarSystemStarTooltip(
+                star.getStarName(), star.getSpectralClass(), star.getDistance(), aliases);
+    }
+
+    /**
+     * Build the F.2 §6.1 format-α tooltip text for a planet. Falls back to the legacy
+     * "name + orbital metadata" payload when no alias service is wired or the planet has
+     * no id (procedurally-generated bodies without backing ExoPlanet rows).
+     */
+    String buildPlanetTooltipText(PlanetDescription planet) {
+        List<AliasDisplay> aliases = (aliasService == null || planet.getId() == null)
+                ? List.of()
+                : aliasService.findActiveAliasesForTooltip(AliasTargetKind.EXOPLANET, planet.getId());
+        return AliasTooltipFormatter.formatPlanetTooltip(
+                planet.getName(),
+                planet.getSemiMajorAxis(),
+                planet.getOrbitalPeriod(),
+                planet.getRadius(),
+                aliases);
     }
 
     // ----- internal -----

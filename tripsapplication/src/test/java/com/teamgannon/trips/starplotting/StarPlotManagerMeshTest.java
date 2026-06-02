@@ -76,7 +76,8 @@ class StarPlotManagerMeshTest {
                 solarSystemService,
                 routeFindingService,
                 contextMenuHandler,
-                eventPublisher
+                eventPublisher,
+                null  // F.2: aliasService — null disables alias tooltip lines (test context)
         );
     }
 
