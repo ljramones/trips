@@ -100,4 +100,37 @@ public final class AliasTooltipFormatter {
             sb.append('\n').append(alias.aliasText()).append(" (").append(alias.universeDisplayName()).append(')');
         }
     }
+
+    /**
+     * Format aliases as a bullet list for a panel surface (Phase F.2 §6.2 — Fictional Info tab).
+     * Each line: {@code "• {aliasText} ({universeDisplayName})"}. Lines joined with {@code \n}.
+     *
+     * <p>Distinct from {@link #formatStarTooltip} / {@link #formatPlanetTooltip} which embed
+     * aliases within a fuller multi-line metadata payload. This method produces JUST the alias
+     * block, intended to be assigned to a single multi-line panel Label whose section header
+     * lives in its own FXML element.
+     *
+     * <p>When the alias list is null or empty, returns {@code emptyPlaceholder} as-is — the
+     * caller picks the empty-state copy (e.g. "(no aliases — activate a universe to see
+     * worldbuilding names)" for the Fictional Info tab).
+     *
+     * @param aliases           alias-display lines to render as bullets
+     * @param emptyPlaceholder  text to return when {@code aliases} is null/empty
+     * @return the bullet-list text, or {@code emptyPlaceholder} if no aliases
+     */
+    public static String formatAliasesAsBulletList(List<AliasDisplay> aliases, String emptyPlaceholder) {
+        if (aliases == null || aliases.isEmpty()) {
+            return emptyPlaceholder;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < aliases.size(); i++) {
+            if (i > 0) {
+                sb.append('\n');
+            }
+            AliasDisplay alias = aliases.get(i);
+            sb.append("• ").append(alias.aliasText())
+                    .append(" (").append(alias.universeDisplayName()).append(')');
+        }
+        return sb.toString();
+    }
 }

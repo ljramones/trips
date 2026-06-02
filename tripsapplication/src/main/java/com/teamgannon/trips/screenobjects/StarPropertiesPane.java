@@ -2,8 +2,14 @@ package com.teamgannon.trips.screenobjects;
 
 import com.teamgannon.trips.events.ClearDataEvent;
 import com.teamgannon.trips.events.DisplayStarEvent;
+import com.teamgannon.trips.javafxsupport.FxThread;
 import com.teamgannon.trips.jpa.model.StarObject;
 import com.teamgannon.trips.service.StarService;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasDesignerService.AliasDisplay;
+import com.teamgannon.trips.spaceshipmodeller.service.AliasTooltipFormatter;
+import com.teamgannon.trips.worldbuilding.UniverseFilteringService;
+import com.terranrepublic.assets.AliasTargetKind;
 import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -17,12 +23,15 @@ import javafx.scene.layout.VBox;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxWeaver;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -128,16 +137,43 @@ public class StarPropertiesPane extends VBox {
     @FXML
     private Button simbadButton;
 
+    // F.2 §6.2 — Aliases section appended at FXML row 16.
+    @FXML
+    private Label aliasesContentLabel;
+
+    /** F.2 §6.2 empty-state copy when no active universe has aliased this star. */
+    static final String EMPTY_ALIASES_PLACEHOLDER =
+            "(no aliases — activate a universe to see worldbuilding names)";
+
 
     private @NotNull StarObject record = new StarObject();
     private final StarService starService;
     private final HostServices hostServices;
+    /**
+     * F.2 §6.2 alias lookup. Nullable for test contexts that don't wire Spring; when null,
+     * the Aliases section shows the empty-state placeholder.
+     */
+    @Nullable
+    private final AliasDesignerService aliasService;
+    /**
+     * F.2 §6.2 broker subscription handle for {@code UniverseActivationChangedEvent}. The pane
+     * is a long-lived Spring singleton owned by {@code RightPanelController}; the subscription
+     * lives for the app lifetime and the handle is held primarily for symmetry with the
+     * UniversesDialog pattern (cleanup is technically unnecessary but available via the
+     * package-private {@link #disposeAliasSubscription} seam for tests).
+     */
+    @Nullable
+    private Runnable filterChangeUnsubscribe;
     private final DecimalFormat decimalFormat = new DecimalFormat("0.###");
 
+    @Autowired
     public StarPropertiesPane(StarService starService,
-                              FxWeaver fxWeaver) {
+                              FxWeaver fxWeaver,
+                              @Nullable AliasDesignerService aliasService,
+                              @Nullable UniverseFilteringService filteringService) {
         this.starService = starService;
         this.hostServices = fxWeaver.getBean(HostServices.class);
+        this.aliasService = aliasService;
         FXMLLoader loader = new FXMLLoader(getClass().getResource("StarPropertiesPane.fxml"));
         loader.setRoot(this);
         loader.setController(this);
@@ -145,6 +181,14 @@ public class StarPropertiesPane extends VBox {
             loader.load();
         } catch (Exception ex) {
             throw new IllegalStateException("Failed to load StarPropertiesPane.fxml", ex);
+        }
+
+        // F.2 §6.2 — broker subscription. When a universe activates/deactivates, re-fetch
+        // and refresh the aliases section for whatever star is currently displayed. Matches
+        // the UniversesDialog pattern from F.1 Step 6.
+        if (filteringService != null) {
+            this.filterChangeUnsubscribe =
+                    filteringService.subscribeToFilterChanges(this::refreshAliasesSection);
         }
     }
 
@@ -202,6 +246,9 @@ public class StarPropertiesPane extends VBox {
         milplanLabel.setText(safeDisplay(record.getMilPlanType()));
         anomalyCheckbox.setSelected(record.isAnomaly());
         otherCheckbox.setSelected(record.isOther());
+
+        // F.2 §6.2 — Aliases section
+        populateAliasesSection(record);
 
         // other info tab
         starNameLabel3.setText(safeDisplay(record.getDisplayName()));
@@ -262,6 +309,11 @@ public class StarPropertiesPane extends VBox {
         milplanLabel.setText(emptyDisplay());
         anomalyCheckbox.setSelected(false);
         otherCheckbox.setSelected(false);
+
+        // F.2 §6.2 — clear Aliases section to empty placeholder
+        if (aliasesContentLabel != null) {
+            aliasesContentLabel.setText(EMPTY_ALIASES_PLACEHOLDER);
+        }
 
         // other info tab
         starNameLabel3.setText(emptyDisplay());
@@ -347,5 +399,51 @@ public class StarPropertiesPane extends VBox {
             log.info("STAR PROPERTIES PANE ::: Receive a display star event: star is:{}", event.getStarObject().getDisplayName());
             setStar(event.getStarObject());
         });
+    }
+
+    // -------------------------------------------------------------------- F.2 §6.2 Aliases section
+
+    /**
+     * Refreshes the Aliases section for the currently-displayed star. Called by the
+     * UniverseFilteringService broker whenever a universe activates/deactivates. Defensive on
+     * everything: pane may have no currently-displayed star (empty {@code record.id});
+     * aliasService may be null (tests); FXML field may not yet be wired (constructor-time
+     * subscription firing before initial render).
+     */
+    private void refreshAliasesSection() {
+        FxThread.runOnFxThread(() -> {
+            if (record != null && record.getId() != null) {
+                populateAliasesSection(record);
+            }
+        });
+    }
+
+    /**
+     * Populates the Aliases section's label with bullet-list text for active-universe aliases
+     * targeting this star. Skipped when {@link #aliasesContentLabel} hasn't been injected by
+     * the FXML loader yet (defensive — shouldn't happen post-{@code initialize()}, but
+     * test harnesses may construct the pane partially).
+     */
+    private void populateAliasesSection(@NotNull StarObject star) {
+        if (aliasesContentLabel == null) {
+            return;
+        }
+        List<AliasDisplay> aliases = (aliasService == null || star.getId() == null)
+                ? List.of()
+                : aliasService.findActiveAliasesForTooltip(AliasTargetKind.STAR, star.getId());
+        aliasesContentLabel.setText(
+                AliasTooltipFormatter.formatAliasesAsBulletList(aliases, EMPTY_ALIASES_PLACEHOLDER));
+    }
+
+    /**
+     * Test-only seam: drops the broker subscription. Long-lived production callers don't need
+     * this (the pane lives for the app lifetime), but tests that construct + destroy panes
+     * benefit from clean unsubscribe to avoid stale callbacks between tests.
+     */
+    void disposeAliasSubscription() {
+        if (filterChangeUnsubscribe != null) {
+            filterChangeUnsubscribe.run();
+            filterChangeUnsubscribe = null;
+        }
     }
 }

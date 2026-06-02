@@ -158,6 +158,54 @@ class AliasTooltipFormatterTest {
         }
     }
 
+    @Nested
+    @DisplayName("formatAliasesAsBulletList — Fictional Info tab section")
+    class BulletListTests {
+
+        @Test
+        @DisplayName("null aliases: returns emptyPlaceholder verbatim")
+        void nullAliasesReturnsPlaceholder() {
+            String result = AliasTooltipFormatter.formatAliasesAsBulletList(
+                    null, "(no aliases)");
+            assertEquals("(no aliases)", result);
+        }
+
+        @Test
+        @DisplayName("empty aliases list: returns emptyPlaceholder verbatim")
+        void emptyAliasesReturnsPlaceholder() {
+            String result = AliasTooltipFormatter.formatAliasesAsBulletList(
+                    List.of(), "(no aliases — activate a universe to see worldbuilding names)");
+            assertEquals("(no aliases — activate a universe to see worldbuilding names)", result);
+        }
+
+        @Test
+        @DisplayName("one alias: bullet + space + aliasText + ' (universeName)'")
+        void oneAliasFormat() {
+            String result = AliasTooltipFormatter.formatAliasesAsBulletList(
+                    List.of(new AliasDisplay("Vulcan", "Star Trek")), "(empty)");
+            assertEquals("• Vulcan (Star Trek)", result);
+        }
+
+        @Test
+        @DisplayName("multiple aliases: lines joined by \\n in input order")
+        void multipleAliasesJoinedByNewline() {
+            String result = AliasTooltipFormatter.formatAliasesAsBulletList(
+                    List.of(
+                            new AliasDisplay("Vulcan", "Star Trek"),
+                            new AliasDisplay("Forty Eri Prime", "Children of the Pattern")),
+                    "(empty)");
+            assertEquals("• Vulcan (Star Trek)\n• Forty Eri Prime (Children of the Pattern)", result);
+        }
+
+        @Test
+        @DisplayName("no leading/trailing newline — each line is just bullet + text")
+        void noLeadingOrTrailingNewline() {
+            String result = AliasTooltipFormatter.formatAliasesAsBulletList(
+                    List.of(new AliasDisplay("X", "Y")), "(empty)");
+            assertEquals("• X (Y)", result, "single alias must have no newlines: " + result);
+        }
+    }
+
     @Test
     @DisplayName("formatter is a stateless utility — no public constructor accessible")
     void noPublicConstructor() {
