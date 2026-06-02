@@ -125,13 +125,8 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     private TextField proceduralSourceField;
 
     // === SCIENCE FICTION SECTION ===
-    private TextField populationField;
-    private TextField techLevelField;
-    private TextField colonizationYearField;
-    private TextField polityField;
-    private TextField primaryResourceField;
-    private TextField strategicImportanceField;
-    private CheckBox colonizedCheck;
+    // Worldbuilding fields (population/techLevel/colonizationYear/polity/primaryResource/strategicImportance/colonized)
+    // removed by normalization task. Notes field preserved.
     private TextArea notesField;
 
     // Validation label
@@ -631,42 +626,10 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
     }
 
     // ==================== SCI-FI TAB ====================
+    // Worldbuilding fields removed by normalization task; tab now hosts only the Notes field.
     private VBox createSciFiContent() {
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(10));
-
-        GridPane grid = createGridPane();
-
-        grid.add(createBoldLabel("Population:"), 0, 0);
-        populationField = createTextField(150);
-        grid.add(populationField, 1, 0);
-
-        colonizedCheck = new CheckBox("Colonized");
-        grid.add(colonizedCheck, 2, 0);
-
-        grid.add(createBoldLabel("Tech Level:"), 0, 1);
-        techLevelField = createTextField(150);
-        grid.add(techLevelField, 1, 1);
-
-        grid.add(createBoldLabel("Colony Year:"), 2, 1);
-        colonizationYearField = createTextField(100);
-        grid.add(colonizationYearField, 3, 1);
-
-        grid.add(createBoldLabel("Polity:"), 0, 2);
-        polityField = createTextField(150);
-        grid.add(polityField, 1, 2);
-
-        grid.add(createBoldLabel("Importance:"), 2, 2);
-        strategicImportanceField = createTextField(100);
-        grid.add(strategicImportanceField, 3, 2);
-
-        grid.add(createBoldLabel("Resource:"), 0, 3);
-        primaryResourceField = createTextField(150);
-        grid.add(primaryResourceField, 1, 3);
-
-        TitledPane sciFiPane = new TitledPane("Science Fiction Properties", grid);
-        sciFiPane.setCollapsible(false);
-        vbox.getChildren().add(sciFiPane);
 
         // Notes section
         GridPane notesGrid = createGridPane();
@@ -806,14 +769,7 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
         ringPrimaryColorField.setText(safeString(planet.getRingPrimaryColor()));
         ringSecondaryColorField.setText(safeString(planet.getRingSecondaryColor()));
 
-        // === SCI-FI ===
-        populationField.setText(planet.getPopulation() != null ? planet.getPopulation().toString() : "");
-        techLevelField.setText(planet.getTechLevel() != null ? planet.getTechLevel().toString() : "");
-        colonizationYearField.setText(planet.getColonizationYear() != null ? planet.getColonizationYear().toString() : "");
-        polityField.setText(safeString(planet.getPolity()));
-        primaryResourceField.setText(safeString(planet.getPrimaryResource()));
-        strategicImportanceField.setText(planet.getStrategicImportance() != null ? planet.getStrategicImportance().toString() : "");
-        colonizedCheck.setSelected(Boolean.TRUE.equals(planet.getColonized()));
+        // === SCI-FI === (worldbuilding population/techLevel/etc. removed by normalization task)
         notesField.setText(safeString(planet.getNotes()));
     }
 
@@ -971,14 +927,7 @@ public class PlanetPropertiesDialog extends Dialog<PlanetEditResult> {
             planet.setRingSecondaryColor(null);
         }
 
-        // === UPDATE SCI-FI ===
-        planet.setPopulation(parseLong(populationField.getText()));
-        planet.setTechLevel(parseInteger(techLevelField.getText()));
-        planet.setColonizationYear(parseInteger(colonizationYearField.getText()));
-        planet.setPolity(polityField.getText().trim());
-        planet.setPrimaryResource(primaryResourceField.getText().trim());
-        planet.setStrategicImportance(parseInteger(strategicImportanceField.getText()));
-        planet.setColonized(colonizedCheck.isSelected());
+        // === UPDATE SCI-FI === (worldbuilding setters removed by normalization task)
         planet.setNotes(notesField.getText().trim());
 
         // Determine if anything changed (include ring changes as orbital changes to trigger redraw)

@@ -23,15 +23,6 @@
             <Tooltip text="toggle starPositionDescriptor labels"/>
         </tooltip>
     </ToggleButton>
-    <ToggleButton fx:id="togglePolityBtn"
-                  mnemonicParsing="false"
-                  textFill="dodgerblue"
-                  onAction="#togglePolities"
-                  text="Star Polities">
-        <tooltip>
-            <Tooltip text="toggle starPositionDescriptor polities"/>
-        </tooltip>
-    </ToggleButton>
     <ToggleButton fx:id="toggleRoutesBtn"
                   mnemonicParsing="false"
                   textFill="dodgerblue"

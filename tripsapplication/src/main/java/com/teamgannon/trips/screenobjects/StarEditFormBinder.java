@@ -62,16 +62,8 @@ public class StarEditFormBinder {
     private TextField gaiaIdTextField;
     private TextArea aliasTextArea;
 
-    // Fictional fields
-    private TextField polityTextField;
-    private TextField worldTypeTextField;
-    private TextField fuelTypeTextField;
-    private TextField techTypeTextField;
-    private TextField portTypeTextField;
-    private TextField popTypeTextField;
-    private TextField prodField;
-    private TextField milspaceTextField;
-    private TextField milplanTextField;
+    // Fictional worldbuilding fields removed by the Worldbuilding Data Model Normalization
+    // task. The widgets, view-model fields, and combo-box config all came down together.
 
     // User fields
     // misc text/num text fields removed with V5 schema cleanup (Issue 31/54).
@@ -139,23 +131,6 @@ public class StarEditFormBinder {
     }
 
     /**
-     * Set the fictional tab fields.
-     */
-    public void setFictionalFields(TextField polity, TextField world, TextField fuel,
-                                   TextField tech, TextField port, TextField pop,
-                                   TextField prod, TextField milSpace, TextField milPlan) {
-        this.polityTextField = polity;
-        this.worldTypeTextField = world;
-        this.fuelTypeTextField = fuel;
-        this.techTypeTextField = tech;
-        this.portTypeTextField = port;
-        this.popTypeTextField = pop;
-        this.prodField = prod;
-        this.milspaceTextField = milSpace;
-        this.milplanTextField = milPlan;
-    }
-
-    /**
      * Set the user custom fields.
      */
     public void setUserFields(CheckBox force) {
@@ -195,21 +170,6 @@ public class StarEditFormBinder {
 
         notesArea.setText(vm.getNotes());
         notesArea.setPromptText("Enter a description or general notes on this star");
-    }
-
-    /**
-     * Initialize fictional tab with data from the view-model.
-     */
-    public void initializeFictionalTab() {
-        polityTextField.setText(vm.getPolity());
-        worldTypeTextField.setText(vm.getWorldType());
-        fuelTypeTextField.setText(vm.getFuelType());
-        techTypeTextField.setText(vm.getTechType());
-        portTypeTextField.setText(vm.getPortType());
-        popTypeTextField.setText(vm.getPopulationType());
-        prodField.setText(vm.getProductType());
-        milspaceTextField.setText(vm.getMilSpaceType());
-        milplanTextField.setText(vm.getMilPlanType());
     }
 
     /**
@@ -324,16 +284,8 @@ public class StarEditFormBinder {
         vm.setMetallicity(readDouble(metallicityTextfield, "Metallicity"));
         vm.setAge(readDouble(ageTextfield, "Age"));
 
-        // Fictional
-        vm.setPolity(polityTextField.getText());
-        vm.setWorldType(worldTypeTextField.getText());
-        vm.setFuelType(fuelTypeTextField.getText());
-        vm.setTechType(techTypeTextField.getText());
-        vm.setPortType(portTypeTextField.getText());
-        vm.setPopulationType(popTypeTextField.getText());
-        vm.setProductType(prodField.getText());
-        vm.setMilSpaceType(milspaceTextField.getText());
-        vm.setMilPlanType(milplanTextField.getText());
+        // Fictional worldbuilding fields removed by the Worldbuilding Data Model
+        // Normalization task — no save-side collection needed.
 
         // Secondary/Scientific
         vm.setRa(readDouble(raLabel, "Right ascension"));

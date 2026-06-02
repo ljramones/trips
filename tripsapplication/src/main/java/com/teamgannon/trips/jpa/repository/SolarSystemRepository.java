@@ -71,13 +71,10 @@ public interface SolarSystemRepository extends JpaRepository<SolarSystem, String
     @Query("SELECT s FROM SOLAR_SYSTEM s WHERE s.starCount > 1")
     List<SolarSystem> findMultiStarSystems();
 
-    /**
-     * Find all solar systems controlled by a specific polity
-     *
-     * @param polity the polity name
-     * @return list of solar systems
-     */
-    List<SolarSystem> findByPolity(String polity);
+    // findByPolity removed by the Worldbuilding Data Model Normalization task — the
+    // SolarSystem.polity field is gone (polity was wrongly-modeled worldbuilding metadata
+    // on a real-data entity). F.3 reintroduces faction-based system queries via
+    // FactionAssignment lookups against the system's primary star.
 
     /**
      * Find all colonized solar systems

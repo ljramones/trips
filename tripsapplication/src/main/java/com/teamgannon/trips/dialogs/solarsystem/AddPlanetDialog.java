@@ -85,13 +85,8 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
     private TextArea atmosphereCompField;
 
     // === SCIENCE FICTION SECTION ===
-    private TextField populationField;
-    private TextField techLevelField;
-    private TextField colonizationYearField;
-    private TextField polityField;
-    private TextField primaryResourceField;
-    private TextField strategicImportanceField;
-    private CheckBox colonizedCheck;
+    // Worldbuilding fields (population/techLevel/colonizationYear/polity/primaryResource/strategicImportance/colonized)
+    // removed by normalization task. Notes field preserved.
     private TextArea notesField;
 
     public AddPlanetDialog(SolarSystemDescription solarSystem, boolean isMoon, ExoPlanet parentPlanet) {
@@ -475,47 +470,10 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
     }
 
     // ==================== SCI-FI TAB ====================
+    // Worldbuilding fields removed by normalization task; tab now hosts only the Notes field.
     private VBox createSciFiContent() {
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(10));
-
-        GridPane grid = createGridPane();
-
-        grid.add(createBoldLabel("Population:"), 0, 0);
-        populationField = createTextField(150);
-        populationField.setPromptText("e.g., 0");
-        grid.add(populationField, 1, 0);
-
-        colonizedCheck = new CheckBox("Colonized");
-        grid.add(colonizedCheck, 2, 0);
-
-        grid.add(createBoldLabel("Tech Level:"), 0, 1);
-        techLevelField = createTextField(150);
-        techLevelField.setPromptText("e.g., 0-15");
-        grid.add(techLevelField, 1, 1);
-
-        grid.add(createBoldLabel("Colonization Year:"), 2, 1);
-        colonizationYearField = createTextField(100);
-        grid.add(colonizationYearField, 3, 1);
-
-        grid.add(createBoldLabel("Polity:"), 0, 2);
-        polityField = createTextField(150);
-        polityField.setPromptText("e.g., Federation");
-        grid.add(polityField, 1, 2);
-
-        grid.add(createBoldLabel("Strategic Importance:"), 2, 2);
-        strategicImportanceField = createTextField(100);
-        strategicImportanceField.setPromptText("1-10");
-        grid.add(strategicImportanceField, 3, 2);
-
-        grid.add(createBoldLabel("Primary Resource:"), 0, 3);
-        primaryResourceField = createTextField(150);
-        primaryResourceField.setPromptText("e.g., Water, Minerals");
-        grid.add(primaryResourceField, 1, 3);
-
-        TitledPane sciFiPane = new TitledPane("Science Fiction Properties", grid);
-        sciFiPane.setCollapsible(false);
-        vbox.getChildren().add(sciFiPane);
 
         // Notes section
         GridPane notesGrid = createGridPane();
@@ -625,13 +583,7 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
         annotate(atmosphereTypeField, "Atmosphere type", "Short atmosphere classification.");
         annotate(atmosphereCompField, "Atmosphere composition", "Atmosphere composition using gas names and proportions.");
 
-        annotate(populationField, "Population", "Optional population count.");
-        annotate(colonizedCheck, "Colonized", "Mark this body as colonized.");
-        annotate(techLevelField, "Tech level", "Optional technology level.");
-        annotate(colonizationYearField, "Colonization year", "Optional year colonization began.");
-        annotate(polityField, "Polity", "Owning or dominant polity.");
-        annotate(strategicImportanceField, "Strategic importance", "Strategic importance rating.");
-        annotate(primaryResourceField, "Primary resource", "Primary resource or economic reason for interest.");
+        // Worldbuilding field accessibility annotations removed by normalization task.
         annotate(notesField, "Notes", "Free-form notes for this planet or moon.");
     }
 
@@ -687,15 +639,6 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
         if (text == null || text.trim().isEmpty()) return null;
         try {
             return Integer.parseInt(text.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private Long parseLong(String text) {
-        if (text == null || text.trim().isEmpty()) return null;
-        try {
-            return Long.parseLong(text.trim());
         } catch (NumberFormatException e) {
             return null;
         }
@@ -792,14 +735,7 @@ public class AddPlanetDialog extends Dialog<ExoPlanet> {
         // Also set tempCalculated for display purposes
         planet.setTempCalculated(parseDouble(surfaceTempField.getText()));
 
-        // Sci-Fi parameters
-        planet.setPopulation(parseLong(populationField.getText()));
-        planet.setTechLevel(parseInteger(techLevelField.getText()));
-        planet.setColonizationYear(parseInteger(colonizationYearField.getText()));
-        planet.setPolity(polityField.getText().trim());
-        planet.setPrimaryResource(primaryResourceField.getText().trim());
-        planet.setStrategicImportance(parseInteger(strategicImportanceField.getText()));
-        planet.setColonized(colonizedCheck.isSelected());
+        // Worldbuilding planet setters removed by normalization task.
         planet.setNotes(notesField.getText().trim());
 
         // Mark as user-created

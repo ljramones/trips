@@ -42,11 +42,8 @@ public class RouteFindingOptions {
     @Builder.Default
     private Set<String> starExclusions = new HashSet<>();
 
-    /**
-     * the polities that we want to exclude
-     */
-    @Builder.Default
-    private Set<String> polityExclusions = new HashSet<>();
+    // polityExclusions removed by the Worldbuilding Data Model Normalization task.
+    // F.3 reintroduces faction-based exclusions via FactionAssignment.
 
     private boolean selected;
 

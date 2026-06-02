@@ -132,17 +132,6 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
                 magv,\
                 magr,\
                 magi,\
-                other,\
-                anomaly,\
-                polity,\
-                worldType,\
-                fuelType,\
-                portType,\
-                populationType,\
-                techType,\
-                productType,\
-                milSpaceType,\
-                milPlanType,\
                 age,\
                 metallicity,\
                 miscText1,\
@@ -206,17 +195,8 @@ public class CSVDataSetDataExportTask extends Task<ExportResults> implements Pro
         csvBuilder.append(starObject.getMagv()).append(", ");
         csvBuilder.append(starObject.getMagr()).append(", ");
         csvBuilder.append(starObject.getMagi()).append(", ");
-        csvBuilder.append(starObject.isOther()).append(", ");
-        csvBuilder.append(starObject.isAnomaly()).append(", ");
-        csvBuilder.append(starObject.getPolity()).append(", ");
-        csvBuilder.append(starObject.getWorldType()).append(", ");
-        csvBuilder.append(starObject.getFuelType()).append(", ");
-        csvBuilder.append(starObject.getPortType()).append(", ");
-        csvBuilder.append(starObject.getPopulationType()).append(", ");
-        csvBuilder.append(starObject.getTechType()).append(", ");
-        csvBuilder.append(starObject.getProductType()).append(", ");
-        csvBuilder.append(starObject.getMilSpaceType()).append(", ");
-        csvBuilder.append(starObject.getMilPlanType()).append(", ");
+        // Worldbuilding fields (other/anomaly/polity/worldType/fuelType/portType/
+        // populationType/techType/productType/milSpaceType/milPlanType) removed by normalization task.
         csvBuilder.append(starObject.getAge()).append(", ");
         csvBuilder.append(starObject.getMetallicity()).append(", ");
         // misc_text1..5 + misc_num1..5 columns dropped in V5 (Issue 31/54).

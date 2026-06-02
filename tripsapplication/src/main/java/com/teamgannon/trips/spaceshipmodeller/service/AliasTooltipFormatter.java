@@ -35,9 +35,12 @@ public final class AliasTooltipFormatter {
      * @return the multi-line tooltip text
      */
     public static String formatStarTooltip(String starName, String polity, List<AliasDisplay> aliases) {
+        // The polity parameter is retained in the signature for backward-compat with existing
+        // callers but ignored — the worldbuilding polity field is gone post-normalization, and
+        // F.3 will reintroduce a faction line driven by FactionAssignment lookups (separate
+        // accessor, separate code path). Aliases append directly to the star name.
         StringBuilder sb = new StringBuilder();
         sb.append(starName == null ? "" : starName);
-        sb.append('\n').append("Polity: ").append(normalisePolity(polity));
         appendAliases(sb, aliases);
         return sb.toString();
     }
@@ -85,12 +88,8 @@ public final class AliasTooltipFormatter {
         return sb.toString();
     }
 
-    private static String normalisePolity(String polity) {
-        if (polity == null || polity.isEmpty() || "NA".equals(polity)) {
-            return "Non-Aligned";
-        }
-        return polity;
-    }
+    // normalisePolity removed by the Worldbuilding Data Model Normalization task. F.3
+    // reintroduces faction-name normalisation via FactionAssignment lookups.
 
     private static void appendAliases(StringBuilder sb, List<AliasDisplay> aliases) {
         if (aliases == null || aliases.isEmpty()) {

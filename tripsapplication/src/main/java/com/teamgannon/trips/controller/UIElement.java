@@ -3,7 +3,6 @@ package com.teamgannon.trips.controller;
 public enum UIElement {
     GRID,
     LABELS,
-    POLITIES,
     STARS,
     ROUTES,
     TRANSITS,

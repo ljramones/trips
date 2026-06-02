@@ -94,16 +94,10 @@ public final class DisplayScoreCalculator {
             cumulativeTotal += 1.5;
         }
 
-        // 8. Is there an entry in polity?
-        String polity = star.getWorldBuilding().getPolity();
-        if (polity != null && !polity.trim().isEmpty() && !"NA".equals(polity)) {
-            cumulativeTotal += 3;
-        }
-
-        // 9. Check if any other fictional item is set
-        if (star.getWorldBuilding().hasAnyFieldsSet()) {
-            cumulativeTotal += 3;
-        }
+        // Steps 8 + 9 (polity weight + worldBuilding.hasAnyFieldsSet weight, +3 each)
+        // removed by the Worldbuilding Data Model Normalization task. F.3 will reintroduce
+        // a faction-based score component once FactionAssignment surfaces a queryable
+        // primary-faction signal per star.
 
         // 10. If none of the above, make the multiplier one
         if (cumulativeTotal == 0) {

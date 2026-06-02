@@ -16,7 +16,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.VBox;
@@ -56,33 +55,19 @@ public class StarPropertiesPane extends VBox {
     @FXML
     private TextArea notesArea;
 
-    // fictional info
+    // Worldbuilding tab — the 13 legacy fictional-info Label/CheckBox fields (starNameLabel2,
+    // commonNameLabel2, polityLabel, worldTypeLabel, fuelTypeLabel, techTypeLabel,
+    // portTypeLabel, popTypeLabel, prodField, milspaceLabel, milplanLabel, anomalyCheckbox,
+    // otherCheckbox) were removed by the Worldbuilding Data Model Normalization task.
+    // What's left on the tab is the F.2 Aliases section + the gray-out overlay below.
+
+    /**
+     * Step 4 gray-out overlay (Worldbuilding Data Model Normalization). Visible when no
+     * worldbuilding universe is currently active, so the tab tells the user where to go
+     * rather than leaving them staring at an empty aliases section.
+     */
     @FXML
-    private Label starNameLabel2;
-    @FXML
-    private Label commonNameLabel2;
-    @FXML
-    private Label polityLabel;
-    @FXML
-    private Label worldTypeLabel;
-    @FXML
-    private Label fuelTypeLabel;
-    @FXML
-    private Label techTypeLabel;
-    @FXML
-    private Label portTypeLabel;
-    @FXML
-    private Label popTypeLabel;
-    @FXML
-    private Label prodField;
-    @FXML
-    private Label milspaceLabel;
-    @FXML
-    private Label milplanLabel;
-    @FXML
-    private CheckBox anomalyCheckbox;
-    @FXML
-    private CheckBox otherCheckbox;
+    private VBox noUniverseOverlay;
 
     // Other Info
     @FXML
@@ -156,6 +141,14 @@ public class StarPropertiesPane extends VBox {
     @Nullable
     private final AliasDesignerService aliasService;
     /**
+     * Step 4 (Worldbuilding Data Model Normalization) — gray-out overlay driver. Used to
+     * check {@link UniverseFilteringService#getActiveUniverseIds()} on each refresh and
+     * toggle {@link #noUniverseOverlay} visibility accordingly. Nullable for test contexts
+     * that don't wire Spring.
+     */
+    @Nullable
+    private final UniverseFilteringService universeFilteringService;
+    /**
      * F.2 §6.2 broker subscription handle for {@code UniverseActivationChangedEvent}. The pane
      * is a long-lived Spring singleton owned by {@code RightPanelController}; the subscription
      * lives for the app lifetime and the handle is held primarily for symmetry with the
@@ -174,6 +167,7 @@ public class StarPropertiesPane extends VBox {
         this.starService = starService;
         this.hostServices = fxWeaver.getBean(HostServices.class);
         this.aliasService = aliasService;
+        this.universeFilteringService = filteringService;
         FXMLLoader loader = new FXMLLoader(getClass().getResource("StarPropertiesPane.fxml"));
         loader.setRoot(this);
         loader.setController(this);
@@ -232,23 +226,16 @@ public class StarPropertiesPane extends VBox {
         ageLabel.setText(formatDouble(record.getAge()));
         notesArea.setText(safeDisplay(record.getNotes()));
 
-        // fictional info tab
-        starNameLabel2.setText(safeDisplay(record.getDisplayName()));
-        commonNameLabel2.setText(safeDisplay(record.getCommonName()));
-        polityLabel.setText(safeDisplay(record.getPolity()));
-        worldTypeLabel.setText(safeDisplay(record.getWorldType()));
-        fuelTypeLabel.setText(safeDisplay(record.getFuelType()));
-        techTypeLabel.setText(safeDisplay(record.getTechType()));
-        portTypeLabel.setText(safeDisplay(record.getPortType()));
-        popTypeLabel.setText(safeDisplay(record.getPopulationType()));
-        prodField.setText(safeDisplay(record.getProductType()));
-        milspaceLabel.setText(safeDisplay(record.getMilSpaceType()));
-        milplanLabel.setText(safeDisplay(record.getMilPlanType()));
-        anomalyCheckbox.setSelected(record.isAnomaly());
-        otherCheckbox.setSelected(record.isOther());
+        // Worldbuilding tab — legacy worldbuilding field labels removed by the Worldbuilding
+        // Data Model Normalization task. The tab is renamed in Step 4 + gains gray-out
+        // overlay. Only the F.2 Aliases section remains; F.3 reintroduces a Faction section.
 
         // F.2 §6.2 — Aliases section
         populateAliasesSection(record);
+
+        // Step 4 (Worldbuilding Data Model Normalization) — toggle gray-out overlay based
+        // on whether any worldbuilding universe is currently active.
+        refreshGrayOutOverlay();
 
         // other info tab
         starNameLabel3.setText(safeDisplay(record.getDisplayName()));
@@ -295,25 +282,18 @@ public class StarPropertiesPane extends VBox {
         ageLabel.setText(emptyDisplay());
         notesArea.setText("");
 
-        // fictional info tab
-        starNameLabel2.setText(emptyDisplay());
-        commonNameLabel2.setText(emptyDisplay());
-        polityLabel.setText(emptyDisplay());
-        worldTypeLabel.setText(emptyDisplay());
-        fuelTypeLabel.setText(emptyDisplay());
-        techTypeLabel.setText(emptyDisplay());
-        portTypeLabel.setText(emptyDisplay());
-        popTypeLabel.setText(emptyDisplay());
-        prodField.setText(emptyDisplay());
-        milspaceLabel.setText(emptyDisplay());
-        milplanLabel.setText(emptyDisplay());
-        anomalyCheckbox.setSelected(false);
-        otherCheckbox.setSelected(false);
+        // Worldbuilding tab — the 11 legacy fictional-info widgets came out with the
+        // Worldbuilding Data Model Normalization task, so there's nothing to reset
+        // beyond the Aliases section and the gray-out overlay.
 
         // F.2 §6.2 — clear Aliases section to empty placeholder
         if (aliasesContentLabel != null) {
             aliasesContentLabel.setText(EMPTY_ALIASES_PLACEHOLDER);
         }
+
+        // Step 4 (Worldbuilding Data Model Normalization) — keep gray-out overlay in
+        // sync after a clear so a "no active universe" state still wins through.
+        refreshGrayOutOverlay();
 
         // other info tab
         starNameLabel3.setText(emptyDisplay());
@@ -404,18 +384,36 @@ public class StarPropertiesPane extends VBox {
     // -------------------------------------------------------------------- F.2 §6.2 Aliases section
 
     /**
-     * Refreshes the Aliases section for the currently-displayed star. Called by the
-     * UniverseFilteringService broker whenever a universe activates/deactivates. Defensive on
-     * everything: pane may have no currently-displayed star (empty {@code record.id});
-     * aliasService may be null (tests); FXML field may not yet be wired (constructor-time
-     * subscription firing before initial render).
+     * Refreshes the Aliases section and gray-out overlay for the currently-displayed star.
+     * Called by the UniverseFilteringService broker whenever a universe activates/deactivates.
+     * Defensive on everything: pane may have no currently-displayed star (empty
+     * {@code record.id}); aliasService / universeFilteringService may be null (tests);
+     * FXML fields may not yet be wired (constructor-time subscription firing before initial
+     * render).
      */
     private void refreshAliasesSection() {
         FxThread.runOnFxThread(() -> {
             if (record != null && record.getId() != null) {
                 populateAliasesSection(record);
             }
+            // Step 4 (Worldbuilding Data Model Normalization) — the gray-out overlay flips
+            // alongside alias content whenever the active-universe set changes.
+            refreshGrayOutOverlay();
         });
+    }
+
+    /**
+     * Step 4 (Worldbuilding Data Model Normalization) — toggles the "no active universe"
+     * gray-out overlay on the Worldbuilding tab. Defensive: the overlay node may be null
+     * (constructor-time broker fire before FXML load) and the filtering service may be null
+     * (test contexts without Spring); both cases short-circuit silently.
+     */
+    private void refreshGrayOutOverlay() {
+        if (noUniverseOverlay == null || universeFilteringService == null) {
+            return;
+        }
+        boolean noActiveUniverse = universeFilteringService.getActiveUniverseIds().isEmpty();
+        noUniverseOverlay.setVisible(noActiveUniverse);
     }
 
     /**

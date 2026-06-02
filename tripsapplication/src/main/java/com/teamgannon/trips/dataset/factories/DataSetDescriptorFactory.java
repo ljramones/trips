@@ -2,7 +2,6 @@ package com.teamgannon.trips.dataset.factories;
 
 
 import com.teamgannon.trips.dataset.model.Link;
-import com.teamgannon.trips.dataset.model.Polity;
 import com.teamgannon.trips.dataset.model.Theme;
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
@@ -202,8 +201,6 @@ public class DataSetDescriptorFactory {
 
             theme.setRouteDescriptorList(createRouteDescriptorMap(chViewFile));
 
-            theme.setPolities(createPolities(chViewFile));
-
             return theme;
         } catch (Exception e) {
             log.error("Failed to create theme from CHView preferences", e);
@@ -250,13 +247,6 @@ public class DataSetDescriptorFactory {
         }
 
         return routeDescriptorMap;
-    }
-
-
-    private static @NotNull List<Polity> createPolities(ChViewFile chViewFile) {
-        List<Polity> polities = new ArrayList<>();
-
-        return polities;
     }
 
 

@@ -121,6 +121,7 @@ class RouteFindingIntegrationTest {
     }
 
     private RouteFindingOptions.RouteFindingOptionsBuilder defaultOptionsBuilder() {
+        // polityExclusions removed by Worldbuilding Data Model Normalization task.
         return RouteFindingOptions.builder()
                 .selected(true)
                 .upperBound(6.0)  // Allow jumps up to 6 LY
@@ -128,8 +129,7 @@ class RouteFindingIntegrationTest {
                 .numberPaths(3)
                 .lineWidth(0.5)
                 .color(Color.BLUE)
-                .starExclusions(new HashSet<>())
-                .polityExclusions(new HashSet<>());
+                .starExclusions(new HashSet<>());
     }
 
     // =========================================================================
@@ -326,25 +326,8 @@ class RouteFindingIntegrationTest {
                     "Error should mention destination star");
         }
 
-        @Test
-        @DisplayName("Route avoids excluded polities")
-        void routeAvoidsExcludedPolities() {
-            RouteFindingOptions options = defaultOptionsBuilder()
-                    .originStarName("Sol")
-                    .destinationStarName("Sirius")
-                    .polityExclusions(Set.of("Independent"))
-                    .upperBound(10.0)
-                    .build();
-
-            RouteFindingResult result = routeFindingService.findRoutes(options, testStarNetwork, dataSet);
-
-            // Should still succeed by going through Terran-controlled space
-            assertTrue(result.isSuccess());
-
-            // Verify path doesn't include Independent stars
-            String path = result.getRoutes().getRoutes().get(0).getPath();
-            assertFalse(path.contains("Vega"), "Path should not include Vega (Independent)");
-        }
+        // Polity-exclusion routing test removed by Worldbuilding Data Model Normalization
+        // task — polityExclusions field on RouteFindingOptions was deleted.
     }
 
     // =========================================================================

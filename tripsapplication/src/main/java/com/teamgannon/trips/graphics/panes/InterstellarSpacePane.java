@@ -448,10 +448,6 @@ public class InterstellarSpacePane extends Pane implements RotationController {
         starPlotManager.toggleLabels(graphEnablesPersist.isDisplayLabels());
     }
 
-    public void togglePolities(boolean polities) {
-        starPlotManager.togglePolities(polities);
-    }
-
     public void toggleExtensions(boolean extensionsOn) {
         starPlotManager.toggleExtensions(extensionsOn);
     }

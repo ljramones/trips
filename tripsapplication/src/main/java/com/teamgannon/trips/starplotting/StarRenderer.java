@@ -12,12 +12,9 @@ import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
-import javafx.scene.effect.Bloom;
 import javafx.scene.effect.Glow;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Shape3D;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +76,6 @@ public class StarRenderer {
     private final StarLabelManager labelManager;
     private final InterstellarScaleManager scaleManager;
     private final SpecialStarMeshManager meshManager;
-    private final PolityObjectFactory polityObjectFactory;
     private final StarClickHandler clickHandler;
 
     /**
@@ -99,24 +95,20 @@ public class StarRenderer {
                         StarLabelManager labelManager,
                         InterstellarScaleManager scaleManager,
                         SpecialStarMeshManager meshManager,
-                        PolityObjectFactory polityObjectFactory,
                         StarClickHandler clickHandler) {
-        this(lodManager, labelManager, scaleManager, meshManager, polityObjectFactory,
-                clickHandler, null);
+        this(lodManager, labelManager, scaleManager, meshManager, clickHandler, null);
     }
 
     public StarRenderer(StarLODManager lodManager,
                         StarLabelManager labelManager,
                         InterstellarScaleManager scaleManager,
                         SpecialStarMeshManager meshManager,
-                        PolityObjectFactory polityObjectFactory,
                         StarClickHandler clickHandler,
                         @Nullable AliasDesignerService aliasService) {
         this.lodManager = lodManager;
         this.labelManager = labelManager;
         this.scaleManager = scaleManager;
         this.meshManager = meshManager;
-        this.polityObjectFactory = polityObjectFactory;
         this.clickHandler = clickHandler;
         this.aliasService = aliasService;
     }
@@ -176,16 +168,6 @@ public class StarRenderer {
             }
         }
 
-        // Add polity object if enabled and applicable
-        if (politiesOn && hasPolity(record)) {
-            MeshView polityObject = createPolityObject(record.getPolity(), polityPreferences);
-            if (polityObject != null) {
-                positionNode(polityObject, record.getCoordinates());
-                clickHandler.setupLazyContextMenu(record, polityObject);
-                pendingPolityNodes.add(polityObject);
-            }
-        }
-
         // Set up context menu
         clickHandler.setupLazyContextMenu(record, starShape);
 
@@ -220,24 +202,6 @@ public class StarRenderer {
         node.setTranslateX(coordinates.getX());
         node.setTranslateY(coordinates.getY());
         node.setTranslateZ(coordinates.getZ());
-    }
-
-    /**
-     * Check if a star record has a valid polity.
-     */
-    private boolean hasPolity(@NotNull StarDisplayRecord record) {
-        return !record.getPolity().equals("NA") && !record.getPolity().isEmpty();
-    }
-
-    /**
-     * Create a polity object for a star.
-     */
-    private MeshView createPolityObject(String polity, CivilizationDisplayPreferences polityPreferences) {
-        MeshView polityObject = polityObjectFactory.createPolityObject(polity, polityPreferences);
-        if (polityObject == null) {
-            log.error("Failed to create polity object for: {}", polity);
-        }
-        return polityObject;
     }
 
     /**

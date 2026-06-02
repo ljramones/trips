@@ -554,14 +554,7 @@ public class SolPlanetsInitializer implements SolarSystemFactory {
         // Host star properties
         setSolStarProperties(planet);
 
-        // Science Fiction properties for Earth
-        planet.setPopulation(8000000000L);  // ~8 billion
-        planet.setTechLevel(10);  // Modern technological civilization
-        planet.setColonized(true);  // Well, we live here
-        planet.setColonizationYear(-200000);  // Homo sapiens ~200,000 years ago
-        planet.setPolity("Various Nations");
-        planet.setStrategicImportance(10);  // Humanity's homeworld
-        planet.setPrimaryResource("Diverse");
+        // Worldbuilding sci-fi setters removed by normalization task.
         planet.setNotes("Third planet from the Sun. Humanity's homeworld. " +
                 "Only known planet with confirmed life. 71% ocean coverage. " +
                 "Single large natural satellite (Moon). Moderate axial tilt creates seasons.");

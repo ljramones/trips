@@ -65,7 +65,6 @@ public class StarEditRecord {
         // Set optional fields
         record.setCommonName(starObject.getCommonName());
         record.setConstellationName(starObject.getConstellationName());
-        record.setPolity(starObject.getPolity());
         record.setTemperature(starObject.getTemperature());
         return record;
     }

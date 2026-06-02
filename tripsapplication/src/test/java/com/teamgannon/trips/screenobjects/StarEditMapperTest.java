@@ -73,21 +73,12 @@ class StarEditMapperTest {
         aliases.add("Helios");
         s.setAliasList(aliases);
 
-        // Fictional
-        s.setPolity("Terran Republic");
-        s.setWorldType("Homeworld");
-        s.setFuelType("Hydrogen");
-        s.setTechType("HighTech");
-        s.setPortType("Class A");
-        s.setPopulationType("Hi");
-        s.setProductType("All");
-        s.setMilSpaceType("Capital");
-        s.setMilPlanType("Garrison");
+        // Fictional fields (polity, worldType, fuelType, techType, portType, populationType,
+        // productType, milSpaceType, milPlanType, anomaly, other) removed by the
+        // Worldbuilding Data Model Normalization task.
 
         // Display
         s.setForceLabelToBeShown(true);
-        s.setAnomaly(false);
-        s.setOther(true);
         return s;
     }
 
@@ -126,12 +117,10 @@ class StarEditMapperTest {
             assertEquals(0.82, vm.getBprp(), 1e-12);
             assertEquals("Gaia-Sol", vm.getGaiaDR2CatId());
 
-            assertEquals("Terran Republic", vm.getPolity());
-            assertEquals("Garrison", vm.getMilPlanType());
+            // Fictional-tab assertions (polity, milPlanType, anomaly, other) removed by
+            // the Worldbuilding Data Model Normalization task.
 
             assertTrue(vm.isForceLabelToBeShown());
-            assertFalse(vm.isAnomaly());
-            assertTrue(vm.isOther());
         }
 
         @Test
@@ -158,8 +147,7 @@ class StarEditMapperTest {
             sparse.setSimbadId(null);
             sparse.setLuminosity(null);
             sparse.setGaiaDR2CatId(null);
-            sparse.setPolity(null);
-            sparse.setWorldType(null);
+            // polity / worldType setters removed by Worldbuilding Data Model Normalization task.
 
             StarEditViewModel vm = StarEditMapper.toViewModel(sparse);
             assertEquals("", vm.getDisplayName());
@@ -170,8 +158,6 @@ class StarEditMapperTest {
             assertEquals("", vm.getSimbadId());
             assertEquals("", vm.getLuminosity());
             assertEquals("", vm.getGaiaDR2CatId());
-            assertEquals("", vm.getPolity());
-            assertEquals("", vm.getWorldType());
         }
 
         @Test
@@ -294,11 +280,9 @@ class StarEditMapperTest {
             assertEquals(snapshot.getRadius(), target.getRadius(), 1e-12);
             assertEquals(snapshot.getMass(), target.getMass(), 1e-12);
             assertEquals(snapshot.getTemperature(), target.getTemperature(), 1e-9);
-            assertEquals(snapshot.getPolity(), target.getPolity());
-            assertEquals(snapshot.getMilPlanType(), target.getMilPlanType());
+            // Fictional-tab round-trip assertions (polity, milPlanType, anomaly, other)
+            // removed by the Worldbuilding Data Model Normalization task.
             assertEquals(snapshot.isForceLabelToBeShown(), target.isForceLabelToBeShown());
-            assertEquals(snapshot.isAnomaly(), target.isAnomaly());
-            assertEquals(snapshot.isOther(), target.isOther());
             assertEquals(snapshot.getAliasList().size(), target.getAliasList().size());
             assertTrue(target.getAliasList().containsAll(snapshot.getAliasList()));
         }

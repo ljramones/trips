@@ -62,7 +62,8 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
 
     // Exclusion panels (replaces individual checkboxes)
     private ExclusionCheckboxPanel spectralClassPanel;
-    private ExclusionCheckboxPanel polityPanel;
+    // polityPanel removed by the Worldbuilding Data Model Normalization task.
+    // F.3 reintroduces faction-based exclusions via FactionAssignment.
 
     private final Font font = RoutingConstants.createDialogFont();
 
@@ -105,9 +106,7 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         setupStarTab(starTab);
         routeSelectionPane.getTabs().add(starTab);
 
-        Tab polityTab = new Tab();
-        setupPolityTab(polityTab);
-        routeSelectionPane.getTabs().add(polityTab);
+        // Polity exclusions tab removed by the Worldbuilding Data Model Normalization task.
 
         VBox vBox = new VBox();
         vBox.getChildren().add(routeSelectionPane);
@@ -161,7 +160,6 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
                 .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                 .lineWidth(Double.parseDouble(lineWidthTextField.getText()))
                 .starExclusions(getStarExclusions())
-                .polityExclusions(getPolityExclusions())
                 .color(colorPicker.getValue())
                 .maxDistance(maxDistance)
                 .numberPaths(Integer.parseInt(numPathsToFindTextField.getText()))
@@ -314,18 +312,11 @@ public class ContextAutomatedRoutingDialog extends Dialog<Boolean> {
         starTab.setContent(spectralClassPanel);
     }
 
-    private void setupPolityTab(Tab polityTab) {
-        polityTab.setText("Polity Exclusions");
-        polityPanel = ExclusionCheckboxPanel.createPolityPanel();
-        polityTab.setContent(polityPanel);
-    }
+    // setupPolityTab + getPolityExclusions removed by the Worldbuilding Data Model
+    // Normalization task. F.3 reintroduces faction-based exclusions.
 
     private Set<String> getStarExclusions() {
         return spectralClassPanel.getSelectedExclusions();
-    }
-
-    private Set<String> getPolityExclusions() {
-        return polityPanel.getSelectedExclusions();
     }
 
     private void close(WindowEvent windowEvent) {

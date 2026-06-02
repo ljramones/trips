@@ -22,11 +22,15 @@ class AliasTooltipFormatterTest {
     @DisplayName("formatStarTooltip — interstellar view")
     class StarTooltipTests {
 
+        // Polity slot removed by the Worldbuilding Data Model Normalization task.
+        // The formatStarTooltip signature still accepts a polity parameter for
+        // backward-compat, but the value is ignored and no "Polity: ..." line is emitted.
+
         @Test
-        @DisplayName("no aliases: returns 'name\\nPolity: <polity>'")
-        void noAliasesProducesTwoLines() {
+        @DisplayName("no aliases: returns star name only (polity slot dropped)")
+        void noAliasesProducesNameOnly() {
             String result = AliasTooltipFormatter.formatStarTooltip("Sol", "Terran Republic", List.of());
-            assertEquals("Sol\nPolity: Terran Republic", result);
+            assertEquals("Sol", result);
         }
 
         @Test
@@ -34,7 +38,7 @@ class AliasTooltipFormatterTest {
         void oneAliasAppendsLine() {
             List<AliasDisplay> aliases = List.of(new AliasDisplay("Vulcan", "Star Trek"));
             String result = AliasTooltipFormatter.formatStarTooltip("40 Eridani A", "Non-Aligned", aliases);
-            assertEquals("40 Eridani A\nPolity: Non-Aligned\nVulcan (Star Trek)", result);
+            assertEquals("40 Eridani A\nVulcan (Star Trek)", result);
         }
 
         @Test
@@ -45,45 +49,38 @@ class AliasTooltipFormatterTest {
                     new AliasDisplay("Forty Eri Prime", "Children of the Pattern"));
             String result = AliasTooltipFormatter.formatStarTooltip("40 Eridani A", "Non-Aligned", aliases);
             assertEquals(
-                    "40 Eridani A\nPolity: Non-Aligned\nVulcan (Star Trek)\nForty Eri Prime (Children of the Pattern)",
+                    "40 Eridani A\nVulcan (Star Trek)\nForty Eri Prime (Children of the Pattern)",
                     result);
         }
 
         @ParameterizedTest
         @ValueSource(strings = {"NA", "", "   "})
-        @DisplayName("polity normalisation: NA / empty / whitespace → 'Non-Aligned'")
-        void polityNormalisedToNonAligned(String rawPolity) {
+        @DisplayName("polity argument is ignored regardless of value")
+        void polityArgumentIgnored(String rawPolity) {
             String result = AliasTooltipFormatter.formatStarTooltip("Sol", rawPolity, List.of());
-            // Empty/whitespace are treated as Non-Aligned per the legacy "NA" semantics; the
-            // whitespace case asserts only that the polity slot reads "Non-Aligned" or starts with
-            // a space-only string — the formatter currently treats only empty + literal "NA" as
-            // canonical, so we relax the whitespace assertion.
-            if ("   ".equals(rawPolity)) {
-                assertTrue(result.contains("Polity: "), "polity slot present: " + result);
-            } else {
-                assertEquals("Sol\nPolity: Non-Aligned", result);
-            }
+            assertEquals("Sol", result);
+            assertTrue(!result.contains("Polity"), "no polity slot in output: " + result);
         }
 
         @Test
-        @DisplayName("null polity → 'Non-Aligned'")
-        void nullPolityNormalised() {
+        @DisplayName("null polity argument is ignored")
+        void nullPolityIgnored() {
             String result = AliasTooltipFormatter.formatStarTooltip("Sol", null, List.of());
-            assertEquals("Sol\nPolity: Non-Aligned", result);
+            assertEquals("Sol", result);
         }
 
         @Test
         @DisplayName("null aliases list: treated as empty")
         void nullAliasesEmpty() {
             String result = AliasTooltipFormatter.formatStarTooltip("Sol", "Terran Republic", null);
-            assertEquals("Sol\nPolity: Terran Republic", result);
+            assertEquals("Sol", result);
         }
 
         @Test
         @DisplayName("null starName: empty string substituted (defensive)")
         void nullStarName() {
             String result = AliasTooltipFormatter.formatStarTooltip(null, "Terran Republic", List.of());
-            assertEquals("\nPolity: Terran Republic", result);
+            assertEquals("", result);
         }
     }
 

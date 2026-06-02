@@ -132,22 +132,9 @@ public class StarObject implements Serializable {
     })
     private StarCatalogIds catalogIds = new StarCatalogIds();
 
-    /** World-building and fiction attributes */
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "polity", column = @Column(name = "polity")),
-            @AttributeOverride(name = "worldType", column = @Column(name = "worldType")),
-            @AttributeOverride(name = "fuelType", column = @Column(name = "fuelType")),
-            @AttributeOverride(name = "portType", column = @Column(name = "portType")),
-            @AttributeOverride(name = "populationType", column = @Column(name = "populationType")),
-            @AttributeOverride(name = "techType", column = @Column(name = "techType")),
-            @AttributeOverride(name = "productType", column = @Column(name = "productType")),
-            @AttributeOverride(name = "milSpaceType", column = @Column(name = "milSpaceType")),
-            @AttributeOverride(name = "milPlanType", column = @Column(name = "milPlanType")),
-            @AttributeOverride(name = "other", column = @Column(name = "other")),
-            @AttributeOverride(name = "anomaly", column = @Column(name = "anomaly"))
-    })
-    private StarWorldBuilding worldBuilding = new StarWorldBuilding();
+    // Worldbuilding fields (polity, worldType, fuelType, etc.) removed in V19 by the
+    // Worldbuilding Data Model Normalization task. Universe-scoped equivalents now live in
+    // dedicated worldbuilding tables (F.1 Universe + F.2 Alias + F.3 FactionAssignment etc.).
 
     // ==================== Physical Properties ====================
 
@@ -311,9 +298,6 @@ public class StarObject implements Serializable {
 
         catalogIds = new StarCatalogIds();
         catalogIds.initDefaults();
-
-        worldBuilding = new StarWorldBuilding();
-        worldBuilding.initDefaults();
     }
 
     // ==================== Coordinate Methods ====================
@@ -457,12 +441,9 @@ public class StarObject implements Serializable {
         this.setSpectralClass(chViewRecord.getSpectra());
         this.setOrthoSpectralClass(chViewRecord.getOrthoSpectra());
 
-        switch (chViewRecord.getGroupNumber()) {
-            case 1 -> this.setPolity(CivilizationDisplayPreferences.ARAKUR);
-            case 2 -> this.setPolity(CivilizationDisplayPreferences.HKHRKH);
-            case 4 -> this.setPolity(CivilizationDisplayPreferences.KTOR);
-            case 8 -> this.setPolity(CivilizationDisplayPreferences.TERRAN);
-        }
+        // ChView group-number → polity switch removed by the Worldbuilding Data Model
+        // Normalization task. F.3 will reintroduce via FactionAssignment auto-seeding in the
+        // Caine Riordan universe based on the same group-number mapping.
         this.setSource("CHView");
     }
 
@@ -521,40 +502,10 @@ public class StarObject implements Serializable {
 
     public void setCatalogIdList(String catalogIdList) { catalogIds.setCatalogIdList(catalogIdList); }
 
-    // --- World Building Accessors ---
-
-    public String getPolity() { return worldBuilding.getPolity(); }
-    public void setPolity(String polity) { worldBuilding.setPolity(polity); }
-
-    public String getWorldType() { return worldBuilding.getWorldType(); }
-    public void setWorldType(String worldType) { worldBuilding.setWorldType(worldType); }
-
-    public String getFuelType() { return worldBuilding.getFuelType(); }
-    public void setFuelType(String fuelType) { worldBuilding.setFuelType(fuelType); }
-
-    public String getPortType() { return worldBuilding.getPortType(); }
-    public void setPortType(String portType) { worldBuilding.setPortType(portType); }
-
-    public String getPopulationType() { return worldBuilding.getPopulationType(); }
-    public void setPopulationType(String populationType) { worldBuilding.setPopulationType(populationType); }
-
-    public String getTechType() { return worldBuilding.getTechType(); }
-    public void setTechType(String techType) { worldBuilding.setTechType(techType); }
-
-    public String getProductType() { return worldBuilding.getProductType(); }
-    public void setProductType(String productType) { worldBuilding.setProductType(productType); }
-
-    public String getMilSpaceType() { return worldBuilding.getMilSpaceType(); }
-    public void setMilSpaceType(String milSpaceType) { worldBuilding.setMilSpaceType(milSpaceType); }
-
-    public String getMilPlanType() { return worldBuilding.getMilPlanType(); }
-    public void setMilPlanType(String milPlanType) { worldBuilding.setMilPlanType(milPlanType); }
-
-    public boolean isOther() { return worldBuilding.isOther(); }
-    public void setOther(boolean other) { worldBuilding.setOther(other); }
-
-    public boolean isAnomaly() { return worldBuilding.isAnomaly(); }
-    public void setAnomaly(boolean anomaly) { worldBuilding.setAnomaly(anomaly); }
+    // World Building Accessors removed by the Worldbuilding Data Model Normalization task.
+    // 11 compatibility getter/setter pairs (polity, worldType, fuelType, portType,
+    // populationType, techType, productType, milSpaceType, milPlanType, other, anomaly)
+    // gone. F.3 reintroduces faction-related accessors via FactionAssignment lookups.
 
     // ==================== Equals & HashCode ====================
 

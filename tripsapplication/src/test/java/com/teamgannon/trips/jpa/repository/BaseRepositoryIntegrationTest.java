@@ -83,8 +83,8 @@ public abstract class BaseRepositoryIntegrationTest {
         star.setSource("");
 
         // Initialize embedded objects
+        // worldBuilding embedded removed by Worldbuilding Data Model Normalization task.
         star.getCatalogIds().initDefaults();
-        star.getWorldBuilding().initDefaults();
 
         return star;
     }
@@ -113,15 +113,8 @@ public abstract class BaseRepositoryIntegrationTest {
         return star;
     }
 
-    /**
-     * Create a star with world-building data.
-     */
-    protected StarObject createStarWithWorldBuilding(String displayName, String polity, String worldType) {
-        StarObject star = createStar(displayName, 0, 0, 0, 10);
-        star.getWorldBuilding().setPolity(polity != null ? polity : "NA");
-        star.getWorldBuilding().setWorldType(worldType != null ? worldType : "NA");
-        return star;
-    }
+    // createStarWithWorldBuilding removed by Worldbuilding Data Model Normalization task —
+    // the StarWorldBuilding @Embeddable and its accessors were deleted.
 
     /**
      * Create Sol at origin.

@@ -21,10 +21,6 @@
                    mnemonicParsing="false"
                    onAction="#toggleScale"
                    text="Scale numbers (Grid block size)"/>
-    <CheckMenuItem fx:id="togglePolitiesMenuitem"
-                   mnemonicParsing="false"
-                   onAction="#togglePolities"
-                   text="Polities"/>
     <CheckMenuItem fx:id="toggleStarMenuitem"
                    mnemonicParsing="false"
                    onAction="#toggleStars"

@@ -68,12 +68,9 @@ public class AstrographicObjectFactory {
             starObject.setOrthoSpectralClass(spectra.substring(0, 1));
         }
 
-        switch (chViewRecord.getGroupNumber()) {
-            case 1 -> starObject.setPolity(CivilizationDisplayPreferences.ARAKUR);
-            case 2 -> starObject.setPolity(CivilizationDisplayPreferences.HKHRKH);
-            case 4 -> starObject.setPolity(CivilizationDisplayPreferences.KTOR);
-            case 8 -> starObject.setPolity(CivilizationDisplayPreferences.TERRAN);
-        }
+        // ChView group-number → polity switch removed by the Worldbuilding Data Model
+        // Normalization task. F.3 will reintroduce via FactionAssignment auto-seeding in
+        // the Caine Riordan universe based on the same group-number mapping.
         starObject.setSource("CHView");
 
         return starObject;

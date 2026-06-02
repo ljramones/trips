@@ -113,16 +113,6 @@ public class StarPlotManager {
      */
     private DebugStarGenerator debugStarGenerator;
 
-    /**
-     * Factory for creating polity indicator objects.
-     */
-    private final PolityObjectFactory polityObjectFactory;
-
-    /**
-     * To hold all the polities.
-     */
-    private final Group politiesDisplayGroup = new Group();
-
     private Group world;
     private SubScene subScene;
 
@@ -131,11 +121,6 @@ public class StarPlotManager {
 
     private ColorPalette colorPalette;
     private StarDisplayPreferences starDisplayPreferences;
-
-    /**
-     * Toggle state of polities.
-     */
-    private boolean politiesOn = true;
 
     private final RouteManager routeManager;
     private double controlPaneOffset;
@@ -165,7 +150,6 @@ public class StarPlotManager {
         this.eventPublisher = eventPublisher;
 
         // Initialize factories and managers
-        this.polityObjectFactory = new PolityObjectFactory(meshViewShapeFactory);
         this.meshManager = new SpecialStarMeshManager(meshViewShapeFactory);
 
         // Configure the context menu handler
@@ -178,7 +162,7 @@ public class StarPlotManager {
         // tooltips can surface universe-scoped alias lines.
         this.starRenderer = new StarRenderer(
                 lodManager, labelManager, scaleManager, meshManager,
-                polityObjectFactory, clickHandler, aliasService
+                clickHandler, aliasService
         );
 
         // Initialize star highlighter
@@ -212,8 +196,6 @@ public class StarPlotManager {
 
         // Initialize extension manager
         extensionManager.initialize(world);
-
-        world.getChildren().add(politiesDisplayGroup);
 
         // Pre-warm the star node pool for faster initial rendering
         lodManager.prewarmPool(100);
@@ -321,7 +303,7 @@ public class StarPlotManager {
                 currentPlot.getStarDisplayPreferences(),
                 currentPlot.getCivilizationDisplayPreferences(),
                 record.isDisplayLabel(),
-                politiesOn
+                false
         );
 
         // Create extension stem to the star from the grid
@@ -340,13 +322,6 @@ public class StarPlotManager {
             log.debug("Batch added {} star nodes to scene graph", starNodes.size());
         }
 
-        List<Node> polityNodes = starRenderer.getPendingPolityNodes();
-        if (!polityNodes.isEmpty()) {
-            politiesDisplayGroup.getChildren().addAll(polityNodes);
-            politiesDisplayGroup.setVisible(true);
-            log.debug("Batch added {} polity nodes to scene graph", polityNodes.size());
-        }
-
         starRenderer.clearPendingNodes();
     }
 
@@ -362,7 +337,6 @@ public class StarPlotManager {
 
         stellarDisplayGroup.getChildren().clear();
         labelManager.clear();
-        politiesDisplayGroup.getChildren().clear();
         extensionManager.clear();
         lodManager.resetStatistics();
         starRenderer.clearCaches();
@@ -391,15 +365,6 @@ public class StarPlotManager {
     public void toggleLabels(boolean labelSetting) {
         if (tripsContext.getCurrentPlot().isPlotActive()) {
             labelManager.setLabelsVisible(labelSetting);
-        }
-    }
-
-    public void togglePolities(boolean polities) {
-        this.politiesOn = polities;
-        log.info("toggle polities: {}", polities);
-
-        if (tripsContext.getCurrentPlot().isPlotActive()) {
-            politiesDisplayGroup.setVisible(polities);
         }
     }
 

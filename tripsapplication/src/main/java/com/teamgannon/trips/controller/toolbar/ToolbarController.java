@@ -33,8 +33,6 @@ public class ToolbarController {
     @FXML
     public ToolBar toolBar;
     @FXML
-    public ToggleButton togglePolityBtn;
-    @FXML
     public ToggleButton toggleRoutesBtn;
     @FXML
     public ToggleButton toggleTransitsBtn;
@@ -103,11 +101,6 @@ public class ToolbarController {
     }
 
     @FXML
-    private void togglePolities() {
-        sharedUIFunctions.togglePolities();
-    }
-
-    @FXML
     public void toggleRoutes(ActionEvent actionEvent) {
         sharedUIFunctions.toggleRoutes();
     }
@@ -164,7 +157,6 @@ public class ToolbarController {
             switch (event.getElement()) {
                 case GRID -> toggleGridBtn.setSelected(event.isState());
                 case LABELS -> toggleLabelsBtn.setSelected(event.isState());
-                case POLITIES -> togglePolityBtn.setSelected(event.isState());
                 case STARS -> toggleStarBtn.setSelected(event.isState());
                 case ROUTES -> toggleRoutesBtn.setSelected(event.isState());
                 case TRANSITS -> toggleTransitsBtn.setSelected(event.isState());

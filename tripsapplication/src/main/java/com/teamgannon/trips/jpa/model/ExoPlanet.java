@@ -642,49 +642,13 @@ public class ExoPlanet implements Serializable {
     @Column(length = 2000)
     private String atmosphereComposition;
 
-    // --- Science Fiction Properties ---
+    // Science Fiction Properties (population, techLevel, colonized, colonizationYear, polity,
+    // strategicImportance, primaryResource) removed in V19 by the Worldbuilding Data Model
+    // Normalization task. Universe-scoped equivalents land in F.6+ phases.
 
     /**
-     * Population of the planet (for colonized worlds)
-     */
-    @Column(nullable = true)
-    private Long population;
-
-    /**
-     * Technology level (1-10 scale for sci-fi settings)
-     */
-    @Column(nullable = true)
-    private Integer techLevel;
-
-    /**
-     * Whether this planet has been colonized
-     */
-    private Boolean colonized;
-
-    /**
-     * Year of colonization (for sci-fi settings)
-     */
-    @Column(nullable = true)
-    private Integer colonizationYear;
-
-    /**
-     * Polity or faction controlling this planet
-     */
-    private String polity;
-
-    /**
-     * Strategic importance rating (1-10)
-     */
-    @Column(nullable = true)
-    private Integer strategicImportance;
-
-    /**
-     * Primary economic activity or resource
-     */
-    private String primaryResource;
-
-    /**
-     * General notes about the planet
+     * General notes about the planet (workflow surface — universal user observations,
+     * preserved per the normalization task's "Fields that stay" criterion).
      */
     @Column(length = 4000)
     private String notes;

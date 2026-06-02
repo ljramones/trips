@@ -99,10 +99,8 @@ public class StarDisplayRecord {
      */
     private @NotNull String spectralClass = "G";
 
-    /**
-     * the polity, NA means not applicatible
-     */
-    private @NotNull String polity = "NA";
+    // polity field removed by the Worldbuilding Data Model Normalization task.
+    // F.3 will reintroduce as a faction lookup via FactionAssignment when appropriate.
 
     /**
      * actual location of the star
@@ -150,7 +148,6 @@ public class StarDisplayRecord {
         object.setRadius(displayRecord.getRadius());
         object.setDistance(displayRecord.getDistance());
         object.setSpectralClass(displayRecord.getSpectralClass());
-        object.setPolity(displayRecord.getPolity());
         object.setForceLabelToBeShown(displayRecord.isLabelForced());
 
         return object;
@@ -182,7 +179,6 @@ public class StarDisplayRecord {
             record.setNotes(starObject.getNotes());
             double[] coords = starObject.getCoordinates();
             record.setActualCoordinates(coords);
-            record.setPolity(starObject.getPolity());
             record.setDisplayScore(starObject.getDisplayScore());
             if (starObject.isForceLabelToBeShown()) {
                 log.info("object forced");
@@ -217,7 +213,6 @@ public class StarDisplayRecord {
         record.setLuminosity(parseDoubleSafe(starObject.getLuminosity()));
         record.setTemperature(starObject.getTemperature());
         record.setNotes(starObject.getNotes());
-        record.setPolity(starObject.getPolity());
 
         double[] coords = starObject.getCoordinates();
         record.setActualCoordinates(coords);
@@ -330,7 +325,7 @@ public class StarDisplayRecord {
         record.setCurrentLabelDisplayScore(currentLabelDisplayScore);
         record.setDisplayLabel(displayLabel);
         record.setSpectralClass(spectralClass);
-        record.setPolity(polity);
+        // polity removed by normalization task
         double[] newCoordinate = new double[3];
         newCoordinate[0] = actualCoordinates[0];
         newCoordinate[1] = actualCoordinates[1];
@@ -427,12 +422,15 @@ public class StarDisplayRecord {
         this.spectralClass = spectralClass;
     }
 
+    // polity field removed by normalization task; accessors retained as no-op stubs
+    // until callers (StarRenderer, RouteFindingService, StarContextMenu*, AliasTooltipFormatter)
+    // are migrated to FactionAssignment lookup.
     public String getPolity() {
-        return polity;
+        return "";
     }
 
     public void setPolity(String polity) {
-        this.polity = polity;
+        // no-op: worldbuilding polity removed by normalization task
     }
 
     public boolean isLabelForced() {

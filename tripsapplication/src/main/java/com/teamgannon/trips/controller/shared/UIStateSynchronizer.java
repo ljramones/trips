@@ -23,7 +23,6 @@ public class UIStateSynchronizer {
         switch (element) {
             case GRID -> sharedUIState.setGridOn(state);
             case LABELS -> sharedUIState.setLabelsOn(state);
-            case POLITIES -> sharedUIState.setPolities(state);
             case STARS -> sharedUIState.setStarsOn(state);
             case ROUTES -> sharedUIState.setRoutesOn(state);
             case TRANSITS -> sharedUIState.setTransitsOn(state);

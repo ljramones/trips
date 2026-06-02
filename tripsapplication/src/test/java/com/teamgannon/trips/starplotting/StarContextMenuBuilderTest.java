@@ -55,9 +55,10 @@ class StarContextMenuBuilderTest {
         Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
 
         runOnFxThread(() -> {
+            // StarDisplayRecord.getPolity() is now a no-op stub returning ""
+            // (worldbuilding polity field removed by normalization task).
             mockRecord = mock(StarDisplayRecord.class);
             when(mockRecord.getStarName()).thenReturn("Test Star");
-            when(mockRecord.getPolity()).thenReturn("Terran");
             when(mockRecord.getRecordId()).thenReturn("test-id-123");
             when(mockRecord.getCoordinates()).thenReturn(new Point3D(10, 20, 30));
 
@@ -119,7 +120,7 @@ class StarContextMenuBuilderTest {
     class TitleSectionTests {
 
         @Test
-        @DisplayName("withTitle adds title with star name and polity")
+        @DisplayName("withTitle adds title with star name")
         void withTitleAddsFormattedTitle() throws Exception {
             runOnFxThread(() -> {
                 StarContextMenuBuilder builder = new StarContextMenuBuilder(testNode, mockRecord);
@@ -129,27 +130,16 @@ class StarContextMenuBuilderTest {
                 assertEquals(2, menu.getItems().size()); // Title + separator
                 MenuItem titleItem = menu.getItems().get(0);
                 assertTrue(titleItem.getText().contains("Test Star"));
-                assertTrue(titleItem.getText().contains("Terran"));
+                // Polity slot in the title no longer populated post-normalization
+                // (worldbuilding polity field removed; title is now "Test Star ()" or
+                // however withTitle() handles the empty polity stub).
                 assertTrue(titleItem.isDisable());
                 return null;
             });
         }
 
-        @Test
-        @DisplayName("withTitle handles NA polity")
-        void withTitleHandlesNAPolity() throws Exception {
-            runOnFxThread(() -> {
-                when(mockRecord.getPolity()).thenReturn("NA");
-
-                StarContextMenuBuilder builder = new StarContextMenuBuilder(testNode, mockRecord);
-                builder.withTitle();
-                ContextMenu menu = builder.build();
-
-                MenuItem titleItem = menu.getItems().get(0);
-                assertTrue(titleItem.getText().contains("Non-aligned"));
-                return null;
-            });
-        }
+        // withTitleHandlesNAPolity test removed by Worldbuilding Data Model Normalization
+        // task — StarDisplayRecord.getPolity() is a no-op stub returning "".
 
         @Test
         @DisplayName("withTitle with custom text")

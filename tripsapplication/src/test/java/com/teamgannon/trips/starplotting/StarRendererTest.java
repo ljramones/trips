@@ -50,9 +50,6 @@ class StarRendererTest {
     private SpecialStarMeshManager meshManager;
 
     @Mock
-    private PolityObjectFactory polityObjectFactory;
-
-    @Mock
     private StarClickHandler clickHandler;
 
     private StarRenderer renderer;
@@ -64,7 +61,6 @@ class StarRendererTest {
                 labelManager,
                 scaleManager,
                 meshManager,
-                polityObjectFactory,
                 clickHandler
         );
     }
@@ -386,7 +382,6 @@ class StarRendererTest {
         lenient().when(record.getCoordinates()).thenReturn(new Point3D(x, y, z));
         lenient().when(record.getStarColor()).thenReturn(Color.YELLOW);
         lenient().when(record.getRadius()).thenReturn(5.0);
-        lenient().when(record.getPolity()).thenReturn("NA");
         return record;
     }
 }

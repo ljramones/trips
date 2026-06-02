@@ -209,18 +209,11 @@ public class AstroCSVStar {
                 astro.setAbsoluteMagnitude("");
             }
 
-            astro.setOther(Boolean.parseBoolean(other.trim()));
-            astro.setAnomaly(Boolean.parseBoolean(anomaly.trim()));
-
-            astro.setPolity(polity);
-            astro.setWorldType(worldType);
-            astro.setFuelType(fuelType);
-            astro.setPortType(portType);
-            astro.setPopulationType(populationType);
-            astro.setTechType(techType);
-            astro.setProductType(productType);
-            astro.setMilSpaceType(milSpaceType);
-            astro.setMilPlanType(milPlanType);
+            // Worldbuilding fields removed by normalization task: CSV columns
+            // (other, anomaly, polity, worldType, fuelType, portType,
+            // populationType, techType, productType, milSpaceType, milPlanType)
+            // are still parsed into this DTO for legacy compatibility but no
+            // longer propagated to StarObject.
 
             astro.setAge(age);
             astro.setMetallicity(metallicity);

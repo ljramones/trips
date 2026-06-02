@@ -113,39 +113,35 @@ class ExoPlanetConstructorTest {
         @Test
         @DisplayName("should allow setting boolean fields")
         void shouldAllowSettingBooleanFields() {
+            // colonized + sci-fi flags removed by Worldbuilding Data Model Normalization task.
             ExoPlanet planet = new ExoPlanet();
             planet.setIsMoon(true);
             planet.setHabitable(true);
             planet.setEarthlike(false);
             planet.setGasGiant(false);
-            planet.setColonized(true);
 
             assertTrue(planet.getIsMoon());
             assertTrue(planet.getHabitable());
             assertFalse(planet.getEarthlike());
             assertFalse(planet.getGasGiant());
-            assertTrue(planet.getColonized());
         }
 
         @Test
         @DisplayName("should allow setting extended properties")
         void shouldAllowSettingExtendedProperties() {
+            // population + polity removed by Worldbuilding Data Model Normalization task.
             ExoPlanet planet = new ExoPlanet();
             planet.setPlanetType("Terrestrial");
             planet.setAtmosphereType("Breathable");
             planet.setSurfaceTemperature(288.0);
             planet.setSurfaceGravity(1.0);
             planet.setHydrosphere(0.71);
-            planet.setPopulation(8000000000L);
-            planet.setPolity("Earth Federation");
 
             assertEquals("Terrestrial", planet.getPlanetType());
             assertEquals("Breathable", planet.getAtmosphereType());
             assertEquals(288.0, planet.getSurfaceTemperature());
             assertEquals(1.0, planet.getSurfaceGravity());
             assertEquals(0.71, planet.getHydrosphere());
-            assertEquals(8000000000L, planet.getPopulation());
-            assertEquals("Earth Federation", planet.getPolity());
         }
     }
 

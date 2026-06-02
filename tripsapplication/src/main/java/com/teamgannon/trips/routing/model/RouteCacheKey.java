@@ -20,6 +20,10 @@ import java.util.*;
  *   <li>Distance bounds are rounded to avoid floating-point comparison issues</li>
  *   <li>Star collection is hashed by star names for efficient comparison</li>
  * </ul>
+ *
+ * <p>Worldbuilding Data Model Normalization task: polityExclusions removed (was a
+ * worldbuilding-flavored filter). F.3 reintroduces faction-based exclusions via
+ * FactionAssignment.
  */
 public final class RouteCacheKey {
 
@@ -31,7 +35,6 @@ public final class RouteCacheKey {
     private final int normalizedLowerBound;
     private final int numberPaths;
     private final Set<String> starExclusions;
-    private final Set<String> polityExclusions;
     private final int starsHash;
     private final int hashCode;
 
@@ -51,7 +54,6 @@ public final class RouteCacheKey {
                 options.getLowerBound(),
                 options.getNumberPaths(),
                 options.getStarExclusions(),
-                options.getPolityExclusions(),
                 0 // No star hash
         );
     }
@@ -74,7 +76,6 @@ public final class RouteCacheKey {
                 options.getLowerBound(),
                 options.getNumberPaths(),
                 options.getStarExclusions(),
-                options.getPolityExclusions(),
                 computeStarsHash(stars)
         );
     }
@@ -107,7 +108,6 @@ public final class RouteCacheKey {
      * @param lowerBound          the minimum jump distance
      * @param numberPaths         the number of paths to find (K)
      * @param starExclusions      spectral classes to exclude
-     * @param polityExclusions    polities to exclude
      * @param starsHash           hash of the available stars (0 if not used)
      */
     public RouteCacheKey(String originStarName,
@@ -116,7 +116,6 @@ public final class RouteCacheKey {
                          double lowerBound,
                          int numberPaths,
                          Set<String> starExclusions,
-                         Set<String> polityExclusions,
                          int starsHash) {
         this.originStarName = originStarName != null ? originStarName : "";
         this.destinationStarName = destinationStarName != null ? destinationStarName : "";
@@ -128,9 +127,6 @@ public final class RouteCacheKey {
         // Use TreeSet for consistent ordering
         this.starExclusions = starExclusions != null
                 ? Collections.unmodifiableSet(new TreeSet<>(starExclusions))
-                : Collections.emptySet();
-        this.polityExclusions = polityExclusions != null
-                ? Collections.unmodifiableSet(new TreeSet<>(polityExclusions))
                 : Collections.emptySet();
 
         // Pre-compute hash code (immutable object)
@@ -155,7 +151,6 @@ public final class RouteCacheKey {
                 normalizedLowerBound,
                 numberPaths,
                 starExclusions,
-                polityExclusions,
                 starsHash
         );
     }
@@ -171,8 +166,7 @@ public final class RouteCacheKey {
                 && starsHash == that.starsHash
                 && originStarName.equals(that.originStarName)
                 && destinationStarName.equals(that.destinationStarName)
-                && starExclusions.equals(that.starExclusions)
-                && polityExclusions.equals(that.polityExclusions);
+                && starExclusions.equals(that.starExclusions);
     }
 
     @Override
@@ -183,14 +177,13 @@ public final class RouteCacheKey {
     @Override
     public String toString() {
         String starsInfo = starsHash != 0 ? ", stars=%08x".formatted(starsHash) : "";
-        return "RouteCacheKey[%s → %s, bounds=%.2f-%.2f, paths=%d, excl=%d/%d%s]".formatted(
+        return "RouteCacheKey[%s → %s, bounds=%.2f-%.2f, paths=%d, excl=%d%s]".formatted(
                 originStarName,
                 destinationStarName,
                 normalizedUpperBound / (double) DISTANCE_PRECISION,
                 normalizedLowerBound / (double) DISTANCE_PRECISION,
                 numberPaths,
                 starExclusions.size(),
-                polityExclusions.size(),
                 starsInfo);
     }
 

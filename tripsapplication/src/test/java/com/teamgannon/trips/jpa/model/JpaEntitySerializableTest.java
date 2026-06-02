@@ -201,9 +201,9 @@ class JpaEntitySerializableTest {
         @Test
         @DisplayName("should serialize and deserialize correctly")
         void shouldSerializeAndDeserialize() throws IOException, ClassNotFoundException {
+            // displayPolities field removed by Worldbuilding Data Model Normalization task.
             GraphEnablesPersist original = new GraphEnablesPersist();
             original.setId("enables-id");
-            original.setDisplayPolities(false);
             original.setDisplayGrid(true);
             original.setDisplayStems(false);
             original.setDisplayLabels(true);
@@ -213,7 +213,6 @@ class JpaEntitySerializableTest {
             GraphEnablesPersist deserialized = serializeAndDeserialize(original);
 
             assertEquals(original.getId(), deserialized.getId());
-            assertEquals(original.isDisplayPolities(), deserialized.isDisplayPolities());
             assertEquals(original.isDisplayGrid(), deserialized.isDisplayGrid());
             assertEquals(original.isDisplayStems(), deserialized.isDisplayStems());
             assertEquals(original.isDisplayLabels(), deserialized.isDisplayLabels());

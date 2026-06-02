@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class SharedUIState {
     private boolean labelsOn;
-    private boolean polities;
     private boolean routesOn;
     private boolean transitsOn;
     private boolean starsOn;

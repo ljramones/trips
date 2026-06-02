@@ -47,6 +47,7 @@ class RouteCacheTest {
     // =========================================================================
 
     private RouteFindingOptions createOptions(String origin, String destination) {
+        // polityExclusions removed by Worldbuilding Data Model Normalization task.
         return RouteFindingOptions.builder()
                 .originStarName(origin)
                 .destinationStarName(destination)
@@ -54,7 +55,6 @@ class RouteCacheTest {
                 .lowerBound(3.0)
                 .numberPaths(3)
                 .starExclusions(new HashSet<>())
-                .polityExclusions(new HashSet<>())
                 .build();
     }
 
@@ -429,6 +429,7 @@ class RouteCacheTest {
         @Test
         @DisplayName("Empty exclusion sets are handled")
         void emptyExclusionSetsAreHandled() {
+            // polityExclusions removed by Worldbuilding Data Model Normalization task.
             RouteFindingOptions options = RouteFindingOptions.builder()
                     .originStarName("Sol")
                     .destinationStarName("Alpha Centauri")
@@ -436,7 +437,6 @@ class RouteCacheTest {
                     .lowerBound(3.0)
                     .numberPaths(3)
                     .starExclusions(new HashSet<>())
-                    .polityExclusions(new HashSet<>())
                     .build();
 
             assertDoesNotThrow(() -> cache.put(options, createSuccessResult()));

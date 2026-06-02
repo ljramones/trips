@@ -151,8 +151,8 @@ class SolarSystemIdentityTest {
             original.setHabitableZoneInnerAU(0.8);
             original.setHabitableZoneOuterAU(1.5);
             original.setDistanceFromSol(4.37);
-            original.setPolity("Federation");
             original.setColonized(true);
+            // polity field removed by Worldbuilding Data Model Normalization task.
 
             // Serialize
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -178,7 +178,6 @@ class SolarSystemIdentityTest {
             assertEquals(original.getHabitableZoneInnerAU(), deserialized.getHabitableZoneInnerAU());
             assertEquals(original.getHabitableZoneOuterAU(), deserialized.getHabitableZoneOuterAU());
             assertEquals(original.getDistanceFromSol(), deserialized.getDistanceFromSol());
-            assertEquals(original.getPolity(), deserialized.getPolity());
             assertEquals(original.isColonized(), deserialized.isColonized());
         }
 
@@ -214,7 +213,7 @@ class SolarSystemIdentityTest {
             star.setDisplayName("Proxima Centauri");
             star.setDataSetName("TestDataset");
             star.setDistance(4.24);
-            star.setPolity("Earth Alliance");
+            // polity field removed by Worldbuilding Data Model Normalization task.
 
             SolarSystem system = SolarSystem.fromStar(star);
 
@@ -223,7 +222,6 @@ class SolarSystemIdentityTest {
             assertEquals("star-456", system.getPrimaryStarId());
             assertEquals("TestDataset", system.getDataSetName());
             assertEquals(4.24, system.getDistanceFromSol());
-            assertEquals("Earth Alliance", system.getPolity());
             assertEquals(1, system.getStarCount());
         }
     }

@@ -269,13 +269,6 @@ public class Theme {
      */
     private @NotNull Map<UUID, RouteDefinition> routeDescriptorList = new HashMap<>();
 
-    /**
-     * list of political entities
-     * <p>
-     * Possible Polities which objects may belong to
-     */
-    private @NotNull List<Polity> polities = new ArrayList<>();
-
     //////////////////////////
 
     public String convertToJson() {

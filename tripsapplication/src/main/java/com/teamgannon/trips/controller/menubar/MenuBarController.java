@@ -48,8 +48,6 @@ public class MenuBarController {
     @FXML
     public CheckMenuItem toggleScaleMenuitem;
     @FXML
-    public CheckMenuItem togglePolitiesMenuitem;
-    @FXML
     public CheckMenuItem toggleStarMenuitem;
     @FXML
     public CheckMenuItem toggleTransitsMenuitem;
@@ -162,10 +160,6 @@ public class MenuBarController {
     }
 
     public void toggleScale(ActionEvent actionEvent) {
-
-    }
-
-    public void togglePolities(ActionEvent actionEvent) {
 
     }
 

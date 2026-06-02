@@ -89,21 +89,13 @@ public class StarEditViewModel {
      */
     private List<String> aliases = new ArrayList<>();
 
-    // ==================== Fictional / sci-fi tab ====================
-
-    private String polity = "";
-    private String worldType = "";
-    private String fuelType = "";
-    private String techType = "";
-    private String portType = "";
-    private String populationType = "";
-    private String productType = "";
-    private String milSpaceType = "";
-    private String milPlanType = "";
+    // Fictional / sci-fi worldbuilding fields removed by the Worldbuilding Data Model
+    // Normalization task. The 11 legacy fields (polity, worldType, fuelType, techType,
+    // portType, populationType, productType, milSpaceType, milPlanType, anomaly, other)
+    // have moved out of the StarObject entity entirely and live in dedicated
+    // worldbuilding aggregates surfaced via UniverseFilteringService.
 
     // ==================== Display tab ====================
 
     private boolean forceLabelToBeShown;
-    private boolean anomaly;
-    private boolean other;
 }

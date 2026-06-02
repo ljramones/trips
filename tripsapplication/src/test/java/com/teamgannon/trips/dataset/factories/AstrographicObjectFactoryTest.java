@@ -2,7 +2,6 @@ package com.teamgannon.trips.dataset.factories;
 
 import com.teamgannon.trips.dialogs.dataset.model.Dataset;
 import com.teamgannon.trips.file.chview.ChViewRecord;
-import com.teamgannon.trips.jpa.model.CivilizationDisplayPreferences;
 import com.teamgannon.trips.jpa.model.StarObject;
 import javafx.scene.paint.Color;
 import org.junit.jupiter.api.BeforeEach;
@@ -310,72 +309,9 @@ class AstrographicObjectFactoryTest {
         }
     }
 
-    @Nested
-    @DisplayName("Polity Assignment Tests")
-    class PolityAssignmentTests {
-
-        @Test
-        @DisplayName("should assign Arakur for group 1")
-        void shouldAssignArakurForGroup1() {
-            chViewRecord.setGroupNumber(1);
-
-            StarObject result = AstrographicObjectFactory.create(dataset, chViewRecord);
-
-            assertEquals(CivilizationDisplayPreferences.ARAKUR, result.getPolity());
-        }
-
-        @Test
-        @DisplayName("should assign HkhRkh for group 2")
-        void shouldAssignHkhRkhForGroup2() {
-            chViewRecord.setGroupNumber(2);
-
-            StarObject result = AstrographicObjectFactory.create(dataset, chViewRecord);
-
-            assertEquals(CivilizationDisplayPreferences.HKHRKH, result.getPolity());
-        }
-
-        @Test
-        @DisplayName("should assign Ktor for group 4")
-        void shouldAssignKtorForGroup4() {
-            chViewRecord.setGroupNumber(4);
-
-            StarObject result = AstrographicObjectFactory.create(dataset, chViewRecord);
-
-            assertEquals(CivilizationDisplayPreferences.KTOR, result.getPolity());
-        }
-
-        @Test
-        @DisplayName("should assign Terran for group 8")
-        void shouldAssignTerranForGroup8() {
-            chViewRecord.setGroupNumber(8);
-
-            StarObject result = AstrographicObjectFactory.create(dataset, chViewRecord);
-
-            assertEquals(CivilizationDisplayPreferences.TERRAN, result.getPolity());
-        }
-
-        @Test
-        @DisplayName("should keep default polity for unknown group")
-        void shouldKeepDefaultPolityForUnknownGroup() {
-            chViewRecord.setGroupNumber(16);
-
-            StarObject result = AstrographicObjectFactory.create(dataset, chViewRecord);
-
-            // Default polity is "NA" for unknown groups
-            assertEquals("NA", result.getPolity());
-        }
-
-        @Test
-        @DisplayName("should keep default polity for group 0")
-        void shouldKeepDefaultPolityForGroup0() {
-            chViewRecord.setGroupNumber(0);
-
-            StarObject result = AstrographicObjectFactory.create(dataset, chViewRecord);
-
-            // Default polity is "NA" for group 0
-            assertEquals("NA", result.getPolity());
-        }
-    }
+    // Polity Assignment Tests removed by the Worldbuilding Data Model Normalization task:
+    // AstrographicObjectFactory no longer maps ChView group numbers to a polity field
+    // (StarObject.polity was deleted; F.3 will reintroduce a FactionAssignment lookup).
 
     @Nested
     @DisplayName("setColor Utility Method Tests")
@@ -484,7 +420,7 @@ class AstrographicObjectFactoryTest {
             assertEquals(1.0, result.getRadius());
             assertEquals("G2V", result.getSpectralClass());
             assertEquals("G", result.getOrthoSpectralClass());
-            assertEquals(CivilizationDisplayPreferences.TERRAN, result.getPolity());
+            // Polity field removed by Worldbuilding Data Model Normalization task.
             assertEquals("CHView", result.getSource());
         }
 

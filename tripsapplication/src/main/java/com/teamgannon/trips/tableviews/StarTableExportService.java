@@ -74,7 +74,6 @@ public class StarTableExportService extends Service<Long> {
                                 log.info("  distance: {}", star.getDistance());
                                 log.info("  realStar: {}", star.isRealStar());
                                 log.info("  x: {}, y: {}, z: {}", star.getX(), star.getY(), star.getZ());
-                                log.info("  other: {}, anomaly: {}", star.isOther(), star.isAnomaly());
                             }
 
                             writeLine(writer, star);
@@ -129,17 +128,6 @@ public class StarTableExportService extends Service<Long> {
                         magv,\
                         magr,\
                         magi,\
-                        other,\
-                        anomaly,\
-                        polity,\
-                        worldType,\
-                        fuelType,\
-                        portType,\
-                        populationType,\
-                        techType,\
-                        productType,\
-                        milSpaceType,\
-                        milPlanType,\
                         age,\
                         metallicity,\
                         miscText1,\
@@ -232,28 +220,8 @@ public class StarTableExportService extends Service<Long> {
                 lineBuilder.append(", ");
                 appendCsvCell(lineBuilder, star.getMagi());
                 lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.isOther());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.isAnomaly());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getPolity());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getWorldType());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getFuelType());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getPortType());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getPopulationType());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getTechType());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getProductType());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMilSpaceType());
-                lineBuilder.append(", ");
-                appendCsvCell(lineBuilder, star.getMilPlanType());
-                lineBuilder.append(", ");
+                // Worldbuilding fields (other/anomaly/polity/worldType/fuelType/portType/
+                // populationType/techType/productType/milSpaceType/milPlanType) removed by normalization task.
                 appendCsvCell(lineBuilder, star.getAge());
                 lineBuilder.append(", ");
                 appendCsvCell(lineBuilder, star.getMetallicity());

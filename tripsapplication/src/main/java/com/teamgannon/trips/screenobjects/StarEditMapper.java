@@ -102,21 +102,10 @@ public final class StarEditMapper {
             vm.setAliases(new ArrayList<>());
         }
 
-        // Fictional / sci-fi
-        vm.setPolity(nullToEmpty(entity.getPolity()));
-        vm.setWorldType(nullToEmpty(entity.getWorldType()));
-        vm.setFuelType(nullToEmpty(entity.getFuelType()));
-        vm.setTechType(nullToEmpty(entity.getTechType()));
-        vm.setPortType(nullToEmpty(entity.getPortType()));
-        vm.setPopulationType(nullToEmpty(entity.getPopulationType()));
-        vm.setProductType(nullToEmpty(entity.getProductType()));
-        vm.setMilSpaceType(nullToEmpty(entity.getMilSpaceType()));
-        vm.setMilPlanType(nullToEmpty(entity.getMilPlanType()));
+        // Fictional / sci-fi worldbuilding fields removed by normalization task.
 
         // Display
         vm.setForceLabelToBeShown(entity.isForceLabelToBeShown());
-        vm.setAnomaly(entity.isAnomaly());
-        vm.setOther(entity.isOther());
 
         return vm;
     }
@@ -179,22 +168,10 @@ public final class StarEditMapper {
         // collection.
         target.setAliasList(toAliasSet(vm.getAliases()));
 
-        // Fictional
-        target.setPolity(vm.getPolity());
-        target.setWorldType(vm.getWorldType());
-        target.setFuelType(vm.getFuelType());
-        target.setTechType(vm.getTechType());
-        target.setPortType(vm.getPortType());
-        target.setPopulationType(vm.getPopulationType());
-        target.setPopulationType(vm.getPopulationType());
-        target.setProductType(vm.getProductType());
-        target.setMilSpaceType(vm.getMilSpaceType());
-        target.setMilPlanType(vm.getMilPlanType());
+        // Fictional worldbuilding fields removed by normalization task.
 
         // Display
         target.setForceLabelToBeShown(vm.isForceLabelToBeShown());
-        target.setAnomaly(vm.isAnomaly());
-        target.setOther(vm.isOther());
     }
 
     private static String nullToEmpty(String s) {

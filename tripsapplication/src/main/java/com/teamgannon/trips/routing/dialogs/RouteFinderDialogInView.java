@@ -65,16 +65,10 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
     private final CheckBox cCheckBox = new CheckBox("C");
     private final CheckBox sCheckBox = new CheckBox("S");
 
-    private final CheckBox terranCheckBox = new CheckBox("Terran");
-    private final CheckBox dornaniCheckBox = new CheckBox("Dornani");
-    private final CheckBox ktorCheckBox = new CheckBox("Ktor");
-    private final CheckBox aratKurCheckBox = new CheckBox("Arat kur");
-    private final CheckBox hkhRkhCheckBox = new CheckBox("Hkh'Rkh");
-    private final CheckBox slassrithiCheckBox = new CheckBox("Slaasrithi");
-    private final CheckBox other1CheckBox = new CheckBox("Other 1");
-    private final CheckBox other2CheckBox = new CheckBox("Other 2");
-    private final CheckBox other3CheckBox = new CheckBox("Other 3");
-    private final CheckBox other4CheckBox = new CheckBox("Other 4");
+    // Polity exclusion checkboxes (terranCheckBox, dornaniCheckBox, ktorCheckBox,
+    // aratKurCheckBox, hkhRkhCheckBox, slassrithiCheckBox, other1-4 CheckBox) removed by
+    // the Worldbuilding Data Model Normalization task. F.3 reintroduces faction-based
+    // exclusions via FactionAssignment.
 
 
     Font font = RoutingConstants.createDialogFont();
@@ -104,9 +98,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         setupStarTab(starTab);
         routeSelectionPane.getTabs().add(starTab);
 
-        Tab polityTab = new Tab();
-        setupPolityTab(polityTab);
-        routeSelectionPane.getTabs().add(polityTab);
+        // Polity exclusions tab removed by the Worldbuilding Data Model Normalization task.
 
         VBox vBox = new VBox();
         vBox.getChildren().add(routeSelectionPane);
@@ -275,54 +267,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
 
     }
 
-    private void setupPolityTab(Tab polityTab) {
-        VBox vBox = new VBox();
-        polityTab.setContent(vBox);
-        polityTab.setText("Polity Exclusions");
-        Label titleLabel = new Label("Select polities to exclude in our route finding");
-        titleLabel.setFont(font);
-        vBox.getChildren().add(titleLabel);
-        vBox.getChildren().add(new Separator());
-
-        HBox hBox = new HBox();
-        vBox.getChildren().add(hBox);
-
-        VBox vBox1 = new VBox();
-        hBox.getChildren().add(vBox1);
-        terranCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox1.getChildren().add(terranCheckBox);
-
-        dornaniCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox1.getChildren().add(dornaniCheckBox);
-
-        ktorCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox1.getChildren().add(ktorCheckBox);
-
-        aratKurCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox1.getChildren().add(aratKurCheckBox);
-
-        hkhRkhCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox1.getChildren().add(hkhRkhCheckBox);
-
-        slassrithiCheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox1.getChildren().add(slassrithiCheckBox);
-
-        VBox vBox2 = new VBox();
-        hBox.getChildren().add(vBox2);
-
-        other1CheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox2.getChildren().add(other1CheckBox);
-
-        other2CheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox2.getChildren().add(other2CheckBox);
-
-        other3CheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox2.getChildren().add(other3CheckBox);
-
-        other4CheckBox.setMinWidth(RoutingConstants.CHECKBOX_WIDTH);
-        vBox2.getChildren().add(other4CheckBox);
-
-    }
+    // setupPolityTab removed by the Worldbuilding Data Model Normalization task.
 
     private Set<String> getStarExclusions() {
         Set<String> starExclusions = new HashSet<>();
@@ -369,42 +314,7 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
         return starExclusions;
     }
 
-    private Set<String> getPolityExclusions() {
-        Set<String> exclusions = new HashSet<>();
-        if (terranCheckBox.isSelected()) {
-            exclusions.add("Terran");
-        }
-        if (dornaniCheckBox.isSelected()) {
-            exclusions.add("Dornani");
-        }
-        if (ktorCheckBox.isSelected()) {
-            exclusions.add("Ktor");
-        }
-        if (aratKurCheckBox.isSelected()) {
-            exclusions.add("Arat Kur");
-        }
-        if (hkhRkhCheckBox.isSelected()) {
-            exclusions.add("Hkh'rkh");
-        }
-        if (slassrithiCheckBox.isSelected()) {
-            exclusions.add("slassrithi");
-        }
-        if (other1CheckBox.isSelected()) {
-            exclusions.add("Other 1");
-        }
-        if (other2CheckBox.isSelected()) {
-            exclusions.add("Other 2");
-        }
-        if (other3CheckBox.isSelected()) {
-            exclusions.add("Other 3");
-        }
-        if (other4CheckBox.isSelected()) {
-            exclusions.add("Other4");
-        }
-
-        return exclusions;
-    }
-
+    // getPolityExclusions removed by the Worldbuilding Data Model Normalization task.
 
     private void close(WindowEvent windowEvent) {
         setResult(RouteFindingOptions.builder().selected(false).build());
@@ -449,7 +359,6 @@ public class RouteFinderDialogInView extends Dialog<RouteFindingOptions> {
                             .lowerBound(Double.parseDouble(lowerLengthLengthTextField.getText()))
                             .lineWidth(Double.parseDouble(lineWidthTextField.getText()))
                             .starExclusions(getStarExclusions())
-                            .polityExclusions(getPolityExclusions())
                             .color(colorPicker.getValue())
                             .maxDistance(maxDistance)
                             .numberPaths(Integer.parseInt(numPathsToFindTextField.getText()))

@@ -608,7 +608,6 @@ public class MainPane  {
      */
     private void updateToggles(@NotNull GraphEnablesPersist graphEnablesPersist) {
         eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.GRID, graphEnablesPersist.isDisplayGrid()));
-        eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.POLITIES, graphEnablesPersist.isDisplayPolities()));
         eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.EXTENSIONS, graphEnablesPersist.isDisplayStems()));
         eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.SCALE, graphEnablesPersist.isDisplayLegend()));
         eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.ROUTES, graphEnablesPersist.isDisplayRoutes()));

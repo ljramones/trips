@@ -31,8 +31,6 @@ public class GraphEnablesPersist implements Serializable {
     @Id
     private String id;
 
-    private boolean displayPolities = true;
-
     private boolean displayGrid = true;
 
     private boolean displayStems = true;
@@ -45,7 +43,6 @@ public class GraphEnablesPersist implements Serializable {
 
     public static @NotNull GraphEnablesPersist getDefaults() {
         GraphEnablesPersist graphEnablesPersist = new GraphEnablesPersist();
-        graphEnablesPersist.setDisplayPolities(true);
         graphEnablesPersist.setDisplayGrid(true);
         graphEnablesPersist.setDisplayStems(true);
         graphEnablesPersist.setDisplayLabels(true);
@@ -55,7 +52,6 @@ public class GraphEnablesPersist implements Serializable {
     }
 
     public void setDefault() {
-        displayPolities = true;
         displayGrid = true;
         displayStems = true;
         displayLabels = true;

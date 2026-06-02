@@ -207,35 +207,8 @@ class ThemeTest {
             }
         }
 
-        @Test
-        @DisplayName("should handle round-trip with polities list")
-        void shouldHandleRoundTripWithPolitiesList() {
-            Polity polity1 = new Polity();
-            polity1.setPolityName("Federation");
-            polity1.setPJumpDist(8.0);
-
-            Polity polity2 = new Polity();
-            polity2.setPolityName("Empire");
-            polity2.setPJumpDist(10.0);
-
-            List<Polity> polities = new ArrayList<>();
-            polities.add(polity1);
-            polities.add(polity2);
-            theme.setPolities(polities);
-
-            String json = theme.convertToJson();
-            Theme restored = theme.toTheme(json);
-
-            // Note: Theme.toTheme may fail if Jackson can't handle FontDescriptor
-            // which uses Color internally. Skip if restored is null.
-            if (restored != null) {
-                assertEquals(2, restored.getPolities().size());
-                assertEquals("Federation", restored.getPolities().get(0).getPolityName());
-                assertEquals(8.0, restored.getPolities().get(0).getPJumpDist());
-                assertEquals("Empire", restored.getPolities().get(1).getPolityName());
-                assertEquals(10.0, restored.getPolities().get(1).getPJumpDist());
-            }
-        }
+        // Round-trip with polities list test removed by Worldbuilding Data Model
+        // Normalization task — Theme.polities field was deleted.
 
         @Test
         @DisplayName("should return null for invalid JSON")
@@ -315,8 +288,7 @@ class ThemeTest {
             assertTrue(newTheme.getLinkList().isEmpty());
             assertNotNull(newTheme.getRouteDescriptorList());
             assertTrue(newTheme.getRouteDescriptorList().isEmpty());
-            assertNotNull(newTheme.getPolities());
-            assertTrue(newTheme.getPolities().isEmpty());
+            // polities collection removed by Worldbuilding Data Model Normalization task.
         }
 
         @Test

@@ -27,16 +27,6 @@ public class SearchPane extends VBox {
     private final DistanceSelectionPanel d2EarthSlider;
     private final StellarClassSelectionPanel stellarClassSelectionPanel = new StellarClassSelectionPanel();
     private final CategorySelectionPanel categorySelectionPanel = new CategorySelectionPanel();
-    private final PolitySelectionPanel politySelectionPanel = new PolitySelectionPanel();
-    private final TechSelectionPanel techSelectionPanel = new TechSelectionPanel();
-    private final FuelSelectionPanel fuelSelectionPanel = new FuelSelectionPanel();
-    private final WorldSelectionPanel worldSelectionPanel = new WorldSelectionPanel();
-    private final PortSelectionPanel portSelectionPanel = new PortSelectionPanel();
-    private final PopulationSelectionPanel populationSelectionPanel = new PopulationSelectionPanel();
-    private final MilSpaceSelectionPanel milSpaceSelectionPanel = new MilSpaceSelectionPanel();
-    private final MilPlanetSelectionPanel milPlanetSelectionPanel = new MilPlanetSelectionPanel();
-    private final ProductsSelectionPanel productsSelectionPanel = new ProductsSelectionPanel();
-    private final MiscellaneousSelectionPanel miscellaneousSelectionPanel = new MiscellaneousSelectionPanel();
     private final SpectralComponentSelectionPanel spectralComponentSelectionPanel = new SpectralComponentSelectionPanel();
     private DataSetPanel dataSetChoicePanel;
 
@@ -50,26 +40,6 @@ public class SearchPane extends VBox {
     private Pane stellarClassBox;
     @FXML
     private Pane categoryBox;
-    @FXML
-    private Pane fuelBox;
-    @FXML
-    private Pane worldBox;
-    @FXML
-    private Pane portBox;
-    @FXML
-    private Pane populationBox;
-    @FXML
-    private Pane polityBox;
-    @FXML
-    private Pane techBox;
-    @FXML
-    private Pane productsBox;
-    @FXML
-    private Pane milSpaceBox;
-    @FXML
-    private Pane milPlanetBox;
-    @FXML
-    private Pane miscBox;
     @FXML
     private Pane spectralComponentBox;
 
@@ -119,19 +89,6 @@ public class SearchPane extends VBox {
         // Stellar filters - collapsed by default
         stellarClassBox.getChildren().add(createTitledPane("Stellar Class", stellarClassSelectionPanel.getPane(), false));
         categoryBox.getChildren().add(createTitledPane("Star Category", categorySelectionPanel.getPane(), false));
-
-        // World building filters - collapsed by default
-        fuelBox.getChildren().add(createTitledPane("Fuel Types", fuelSelectionPanel.getPane(), false));
-        worldBox.getChildren().add(createTitledPane("World Types", worldSelectionPanel.getPane(), false));
-        portBox.getChildren().add(createTitledPane("Port Types", portSelectionPanel.getPane(), false));
-        populationBox.getChildren().add(createTitledPane("Population", populationSelectionPanel.getPane(), false));
-        polityBox.getChildren().add(createTitledPane("Polity", politySelectionPanel.getPane(), false));
-
-        techBox.getChildren().add(createTitledPane("Technology", techSelectionPanel.getPane(), false));
-        productsBox.getChildren().add(createTitledPane("Products", productsSelectionPanel.getPane(), false));
-        milSpaceBox.getChildren().add(createTitledPane("Military Space", milSpaceSelectionPanel.getPane(), false));
-        milPlanetBox.getChildren().add(createTitledPane("Military Planet", milPlanetSelectionPanel.getPane(), false));
-        miscBox.getChildren().add(createTitledPane("Miscellaneous", miscellaneousSelectionPanel.getPane(), false));
 
         // Advanced spectral component filter
         spectralComponentBox.getChildren().add(createTitledPane("Advanced Spectral Filter", spectralComponentSelectionPanel, false));
@@ -219,102 +176,11 @@ public class SearchPane extends VBox {
         astroSearchQuery.setLowerDistanceLimit(d2EarthSlider.getDistance().getLowValue());
         astroSearchQuery.setUpperDistanceLimit(d2EarthSlider.getDistance().getHighValue());
         astroSearchQuery.setRealStars(categorySelectionPanel.isRealStars());
-        astroSearchQuery.setAnomalySearch(miscellaneousSelectionPanel.isAnomalyPresent());
-        astroSearchQuery.setOtherSearch(miscellaneousSelectionPanel.isOtherPresent());
 
-        getPolityValues(astroSearchQuery);
         getStellarTypes(astroSearchQuery);
         getSpectralComponentFilter(astroSearchQuery);
-        getPortTypes(astroSearchQuery);
-        getTechTypes(astroSearchQuery);
-        getFuelTypes(astroSearchQuery);
-        getPopulationTypes(astroSearchQuery);
-        getWorldSearch(astroSearchQuery);
-        getMilSpaceSearch(astroSearchQuery);
-        getMilPlanSearch(astroSearchQuery);
-        getProductSearch(astroSearchQuery);
 
         return astroSearchQuery;
-    }
-
-    private void getProductSearch(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearProductTypes();
-        if (productsSelectionPanel.isSelected()) {
-            astroSearchQuery.setProductSearch(true);
-            astroSearchQuery.addProducts(productsSelectionPanel.getSelections());
-        } else {
-            astroSearchQuery.setProductSearch(false);
-        }
-    }
-
-    private void getPortTypes(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearPortTypes();
-        if (portSelectionPanel.isSelected()) {
-            astroSearchQuery.setPortSearch(true);
-            astroSearchQuery.addPorts(portSelectionPanel.getSelections());
-        } else {
-            astroSearchQuery.setPortSearch(false);
-        }
-    }
-
-    private void getMilPlanSearch(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearMilPlanTypes();
-        if (milPlanetSelectionPanel.isSelected()) {
-            astroSearchQuery.setMilPlanetSearch(true);
-            astroSearchQuery.addMilPlans(milPlanetSelectionPanel.getSelections());
-        } else {
-            astroSearchQuery.setMilPlanetSearch(false);
-        }
-    }
-
-    private void getMilSpaceSearch(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearMilSpaceTypes();
-        if (milSpaceSelectionPanel.isSelected()) {
-            astroSearchQuery.setMilSpaceSearch(true);
-            astroSearchQuery.addMilSpaces(milSpaceSelectionPanel.getSelections());
-        } else {
-            astroSearchQuery.setMilSpaceSearch(false);
-        }
-    }
-
-    private void getWorldSearch(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearWorldTypes();
-        if (worldSelectionPanel.isSelected()) {
-            astroSearchQuery.setWorldSearch(true);
-            astroSearchQuery.addWorldTypes(worldSelectionPanel.getSelections());
-        } else {
-            astroSearchQuery.setWorldSearch(false);
-        }
-    }
-
-    private void getPopulationTypes(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearPopulationTypes();
-        if (populationSelectionPanel.isSelected()) {
-            astroSearchQuery.setPopSearch(true);
-            astroSearchQuery.addPopulationTypes(populationSelectionPanel.getSelections());
-        } else {
-            astroSearchQuery.setPopSearch(false);
-        }
-    }
-
-    private void getFuelTypes(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearFuelTypes();
-        if (fuelSelectionPanel.isSelected()) {
-            astroSearchQuery.setFuelSearch(true);
-            astroSearchQuery.addFuelTypes(fuelSelectionPanel.getSelections());
-        } else {
-            astroSearchQuery.setFuelSearch(false);
-        }
-    }
-
-    private void getTechTypes(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearTechTypes();
-        if (techSelectionPanel.isSelected()) {
-            astroSearchQuery.setTechSearch(true);
-            astroSearchQuery.addTechs(techSelectionPanel.getSelections());
-        } else {
-            astroSearchQuery.setTechSearch(false);
-        }
     }
 
     private void getStellarTypes(@NotNull AstroSearchQuery astroSearchQuery) {
@@ -333,13 +199,6 @@ public class SearchPane extends VBox {
                     spectralComponentSelectionPanel.getSelectedSubtypes(),
                     spectralComponentSelectionPanel.getSelectedLuminosityClasses()
             );
-        }
-    }
-
-    private void getPolityValues(@NotNull AstroSearchQuery astroSearchQuery) {
-        astroSearchQuery.clearPolities();
-        if (politySelectionPanel.isSelected()) {
-            astroSearchQuery.addPolities(politySelectionPanel.getPolitySelections());
         }
     }
 

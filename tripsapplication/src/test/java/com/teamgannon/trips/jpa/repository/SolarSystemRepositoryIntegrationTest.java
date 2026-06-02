@@ -164,10 +164,10 @@ class SolarSystemRepositoryIntegrationTest extends BaseRepositoryIntegrationTest
     class WorldBuildingTests {
 
         @Test
-        @DisplayName("should save and retrieve polity and colonization info")
-        void shouldSaveAndRetrievePolityAndColonization() {
+        @DisplayName("should save and retrieve colonization info")
+        void shouldSaveAndRetrieveColonization() {
+            // polity field on SolarSystem removed by Worldbuilding Data Model Normalization task.
             SolarSystem system = createSolarSystem("Federation System", testStar.getId());
-            system.setPolity("United Federation");
             system.setColonized(true);
             system.setTotalPopulation(1000000L);
             solarSystemRepository.save(system);
@@ -176,7 +176,6 @@ class SolarSystemRepositoryIntegrationTest extends BaseRepositoryIntegrationTest
             Optional<SolarSystem> found = solarSystemRepository.findBySystemName("Federation System");
 
             assertThat(found).isPresent();
-            assertThat(found.get().getPolity()).isEqualTo("United Federation");
             assertThat(found.get().isColonized()).isTrue();
             assertThat(found.get().getTotalPopulation()).isEqualTo(1000000L);
         }

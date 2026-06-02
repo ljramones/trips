@@ -38,7 +38,6 @@ class StarRendererTooltipTest {
     @Mock private StarLabelManager labelManager;
     @Mock private InterstellarScaleManager scaleManager;
     @Mock private SpecialStarMeshManager meshManager;
-    @Mock private PolityObjectFactory polityObjectFactory;
     @Mock private StarClickHandler clickHandler;
     @Mock private AliasDesignerService aliasService;
 
@@ -48,35 +47,36 @@ class StarRendererTooltipTest {
     @BeforeEach
     void setUp() {
         rendererWithAliases = new StarRenderer(lodManager, labelManager, scaleManager,
-                meshManager, polityObjectFactory, clickHandler, aliasService);
+                meshManager, clickHandler, aliasService);
         rendererWithoutAliases = new StarRenderer(lodManager, labelManager, scaleManager,
-                meshManager, polityObjectFactory, clickHandler, null);
+                meshManager, clickHandler, null);
     }
 
-    private static StarDisplayRecord starRecord(String id, String name, String polity) {
+    private static StarDisplayRecord starRecord(String id, String name) {
+        // Polity field was removed by the Worldbuilding Data Model Normalization task;
+        // tooltip text now omits the "Polity: ..." line.
         StarDisplayRecord r = new StarDisplayRecord();
         r.setRecordId(id);
         r.setStarName(name);
-        r.setPolity(polity);
         return r;
     }
 
     @Test
-    @DisplayName("null aliasService: tooltip text is name + polity only (no service interaction)")
+    @DisplayName("null aliasService: tooltip text is star name only (no service interaction)")
     void nullAliasServiceProducesBaselineText() {
         String text = rendererWithoutAliases.buildStarTooltipText(
-                starRecord("star-1", "Sol", "Terran Republic"));
-        assertEquals("Sol\nPolity: Terran Republic", text);
+                starRecord("star-1", "Sol"));
+        assertEquals("Sol", text);
     }
 
     @Test
-    @DisplayName("zero active aliases: tooltip text is name + polity only")
+    @DisplayName("zero active aliases: tooltip text is star name only")
     void zeroActiveAliasesProducesBaselineText() {
         when(aliasService.findActiveAliasesForTooltip(AliasTargetKind.STAR, "star-1"))
                 .thenReturn(List.of());
         String text = rendererWithAliases.buildStarTooltipText(
-                starRecord("star-1", "Sol", "Terran Republic"));
-        assertEquals("Sol\nPolity: Terran Republic", text);
+                starRecord("star-1", "Sol"));
+        assertEquals("Sol", text);
         verify(aliasService).findActiveAliasesForTooltip(AliasTargetKind.STAR, "star-1");
     }
 
@@ -86,8 +86,8 @@ class StarRendererTooltipTest {
         when(aliasService.findActiveAliasesForTooltip(AliasTargetKind.STAR, "star-40-eri-a"))
                 .thenReturn(List.of(new AliasDisplay("Vulcan", "Star Trek")));
         String text = rendererWithAliases.buildStarTooltipText(
-                starRecord("star-40-eri-a", "40 Eridani A", "Non-Aligned"));
-        assertEquals("40 Eridani A\nPolity: Non-Aligned\nVulcan (Star Trek)", text);
+                starRecord("star-40-eri-a", "40 Eridani A"));
+        assertEquals("40 Eridani A\nVulcan (Star Trek)", text);
     }
 
     @Test
@@ -98,7 +98,7 @@ class StarRendererTooltipTest {
                         new AliasDisplay("Vulcan", "Star Trek"),
                         new AliasDisplay("Forty Eri Prime", "Children of the Pattern")));
         String text = rendererWithAliases.buildStarTooltipText(
-                starRecord("s", "40 Eridani A", "Non-Aligned"));
+                starRecord("s", "40 Eridani A"));
         assertTrue(text.endsWith("\nVulcan (Star Trek)\nForty Eri Prime (Children of the Pattern)"),
                 "alias lines must follow service order: " + text);
     }
@@ -109,20 +109,11 @@ class StarRendererTooltipTest {
         when(aliasService.findActiveAliasesForTooltip(AliasTargetKind.STAR, "star-id-not-name"))
                 .thenReturn(List.of());
         rendererWithAliases.buildStarTooltipText(
-                starRecord("star-id-not-name", "DisplayName", "Polity"));
+                starRecord("star-id-not-name", "DisplayName"));
         verify(aliasService).findActiveAliasesForTooltip(AliasTargetKind.STAR, "star-id-not-name");
         // Never called with the display name as the target id
         verify(aliasService, never()).findActiveAliasesForTooltip(AliasTargetKind.STAR, "DisplayName");
         // Never called with EXOPLANET kind from the star renderer
         verify(aliasService, never()).findActiveAliasesForTooltip(AliasTargetKind.EXOPLANET, "star-id-not-name");
-    }
-
-    @Test
-    @DisplayName("polity NA normalises to Non-Aligned in tooltip")
-    void polityNANormalised() {
-        when(aliasService.findActiveAliasesForTooltip(AliasTargetKind.STAR, "s"))
-                .thenReturn(List.of());
-        String text = rendererWithAliases.buildStarTooltipText(starRecord("s", "Wolf 359", "NA"));
-        assertEquals("Wolf 359\nPolity: Non-Aligned", text);
     }
 }

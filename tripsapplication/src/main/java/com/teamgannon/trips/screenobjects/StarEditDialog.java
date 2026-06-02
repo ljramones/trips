@@ -71,29 +71,10 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
     @FXML private TextField gaiaIdTextField;
     @FXML private TextArea aliasTextArea;
 
-    // Fictional Info
-    @FXML private TextField polityTextField;
-    @FXML private TextField worldTypeTextField;
-    @FXML private TextField fuelTypeTextField;
-    @FXML private TextField techTypeTextField;
-    @FXML private TextField portTypeTextField;
-    @FXML private TextField popTypeTextField;
-    @FXML private TextField prodField;
-    @FXML private TextField milspaceTextField;
-    @FXML private TextField milplanTextField;
-    @FXML private CheckBox anomalyCheckbox;
-    @FXML private CheckBox otherCheckbox;
-
-    // Combo boxes
-    @FXML private ComboBox<String> politiesComboBox;
-    @FXML private ComboBox<String> worldComboBox;
-    @FXML private ComboBox<String> fuelComboBox;
-    @FXML private ComboBox<String> techComboBox;
-    @FXML private ComboBox<String> portComboBox;
-    @FXML private ComboBox<String> populationComboBox;
-    @FXML private ComboBox<String> productComboBox;
-    @FXML private ComboBox<String> milSpaceComboBox;
-    @FXML private ComboBox<String> milPlanComboBox;
+    // Fictional Info worldbuilding widgets removed by the Worldbuilding Data Model
+    // Normalization task. The whole "Fictional Info" tab came out of the FXML, and
+    // the corresponding view-model fields, form-binder bindings, and combo-box
+    // config helper all went with it.
 
     @FXML private CheckBox forceLabel;
     @FXML private Button updateAliasBtn;
@@ -132,15 +113,10 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
                 maguTextField, magbTextField, magvTextField, magrTextField, magiTextField,
                 gaiaIdTextField, aliasTextArea);
 
-        formBinder.setFictionalFields(polityTextField, worldTypeTextField, fuelTypeTextField,
-                techTypeTextField, portTypeTextField, popTypeTextField,
-                prodField, milspaceTextField, milplanTextField);
-
         formBinder.setUserFields(forceLabel);
 
-        // Initialize tabs
+        // Initialize tabs (the Fictional Info tab came out with the worldbuilding cleanup)
         formBinder.initializeOverviewTab(recordIdLabel, dataSetLabel);
-        initializeFictionalTab();
         formBinder.initializeSecondaryTab();
         formBinder.initializeUserTab();
 
@@ -148,38 +124,12 @@ public class StarEditDialog extends Dialog<StarEditStatus> {
         updateAliasBtn.setOnAction(this::updateAliasList);
         resetBtn.setOnAction(this::cancelClicked);
         addBtn.setOnAction(this::changeClicked);
-
-        // Set up checkbox handlers
-        anomalyCheckbox.setOnAction(event -> vm.setAnomaly(anomalyCheckbox.isSelected()));
-        otherCheckbox.setOnAction(event -> vm.setOther(otherCheckbox.isSelected()));
     }
 
     private void close(DialogEvent event) {
         StarEditStatus editStatus = new StarEditStatus();
         editStatus.setChanged(false);
         setResult(editStatus);
-    }
-
-    private void initializeFictionalTab() {
-        // Initialize text fields from the view-model
-        formBinder.initializeFictionalTab();
-
-        // Set up checkboxes
-        anomalyCheckbox.setSelected(vm.isAnomaly());
-        otherCheckbox.setSelected(vm.isOther());
-
-        // Configure all combo boxes
-        StarEditComboConfig.setupAllCombos(
-                politiesComboBox, polityTextField, vm.getPolity(),
-                worldComboBox, worldTypeTextField, vm.getWorldType(),
-                fuelComboBox, fuelTypeTextField, vm.getFuelType(),
-                techComboBox, techTypeTextField, vm.getTechType(),
-                portComboBox, portTypeTextField, vm.getPortType(),
-                populationComboBox, popTypeTextField, vm.getPopulationType(),
-                productComboBox, prodField, vm.getProductType(),
-                milSpaceComboBox, milspaceTextField, vm.getMilSpaceType(),
-                milPlanComboBox, milplanTextField, vm.getMilPlanType()
-        );
     }
 
     private void updateAliasList(ActionEvent actionEvent) {

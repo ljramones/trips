@@ -103,16 +103,6 @@ public class SharedUIFunctions {
         eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.LABELS, newState));
     }
 
-    public void togglePolities() {
-        if (sharedUIState.isStarsOn()) {
-            boolean newState = !sharedUIState.isPolities();
-            sharedUIState.setPolities(!sharedUIState.isPolities());
-            tripsContext.getAppViewPreferences().getGraphEnablesPersist().setDisplayPolities(sharedUIState.isPolities());
-            interstellarSpacePane.togglePolities(sharedUIState.isPolities());
-            eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.POLITIES, newState));
-        }
-    }
-
     public void toggleRoutes() {
         boolean newState = !sharedUIState.isRoutesOn();
         sharedUIState.setRoutesOn(newState);
@@ -129,11 +119,6 @@ public class SharedUIFunctions {
     }
 
     public void toggleStars() {
-        if (sharedUIState.isStarsOn()) {
-            sharedUIState.setPolities(false);
-            interstellarSpacePane.togglePolities(false);
-            eventPublisher.publishEvent(new UIStateChangeEvent(this, UIElement.POLITIES, false));
-        }
         boolean newState = !sharedUIState.isStarsOn();
         sharedUIState.setStarsOn(newState);
         interstellarSpacePane.toggleStars(newState);

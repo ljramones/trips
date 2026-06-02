@@ -47,17 +47,9 @@ public final class StarCsvFormatter {
                 "magv," +                 // 29
                 "magr," +                 // 30
                 "magi," +                 // 31
-                "other," +                // 32
-                "anomaly," +              // 33
-                "polity," +               // 34
-                "worldType," +            // 35
-                "fuelType," +             // 36
-                "portType," +             // 37
-                "populationType," +       // 38
-                "techType," +             // 39
-                "productType," +          // 40
-                "milSpaceType," +         // 41
-                "milPlanType," +          // 42
+                // 32-42: worldbuilding columns (other, anomaly, polity, worldType,
+                // fuelType, portType, populationType, techType, productType,
+                // milSpaceType, milPlanType) removed by normalization task.
                 "age," +                  // 43
                 "metallicity," +          // 44
                 "miscText1," +            // 45
@@ -116,17 +108,7 @@ public final class StarCsvFormatter {
         csvBuilder.append(starObject.getMagv()).append(", ");
         csvBuilder.append(starObject.getMagr()).append(", ");
         csvBuilder.append(starObject.getMagi()).append(", ");
-        csvBuilder.append(starObject.isOther()).append(", ");
-        csvBuilder.append(starObject.isAnomaly()).append(", ");
-        appendField(csvBuilder, starObject.getPolity());
-        appendField(csvBuilder, starObject.getWorldType());
-        appendField(csvBuilder, starObject.getFuelType());
-        appendField(csvBuilder, starObject.getPortType());
-        appendField(csvBuilder, starObject.getPopulationType());
-        appendField(csvBuilder, starObject.getTechType());
-        appendField(csvBuilder, starObject.getProductType());
-        appendField(csvBuilder, starObject.getMilSpaceType());
-        appendField(csvBuilder, starObject.getMilPlanType());
+        // 32-42: worldbuilding fields removed by normalization task.
         csvBuilder.append(starObject.getAge()).append(", ");
         csvBuilder.append(starObject.getMetallicity()).append(", ");
         // 45-49: miscText1..5 dropped in V5 (Issue 31/54) — empty placeholders

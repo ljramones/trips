@@ -184,9 +184,10 @@ public class RegularStarCatalogCsvReader {
                     }
 
                     if (loadStats.getTotalCount() < 10) {
-                        log.info("CSV import PARSED: name='{}', dist={}, realStar={}, other={}, anomaly={}, dataSetName='{}'",
+                        // Worldbuilding params (other/anomaly) removed by normalization task.
+                        log.info("CSV import PARSED: name='{}', dist={}, realStar={}, dataSetName='{}'",
                                 starObject.getDisplayName(), starObject.getDistance(),
-                                starObject.isRealStar(), starObject.isOther(), starObject.isAnomaly(),
+                                starObject.isRealStar(),
                                 starObject.getDataSetName());
                     }
 

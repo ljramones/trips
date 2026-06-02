@@ -28,6 +28,7 @@ class RouteCacheKeyTest {
     // Test Helpers
     // =========================================================================
 
+    // polityExclusions removed by Worldbuilding Data Model Normalization task.
     private RouteFindingOptions createOptions(String origin, String destination,
                                                double upper, double lower, int paths) {
         return RouteFindingOptions.builder()
@@ -37,12 +38,11 @@ class RouteCacheKeyTest {
                 .lowerBound(lower)
                 .numberPaths(paths)
                 .starExclusions(new HashSet<>())
-                .polityExclusions(new HashSet<>())
                 .build();
     }
 
     private RouteFindingOptions createOptionsWithExclusions(String origin, String destination,
-                                                             Set<String> starExcl, Set<String> polityExcl) {
+                                                             Set<String> starExcl) {
         return RouteFindingOptions.builder()
                 .originStarName(origin)
                 .destinationStarName(destination)
@@ -50,7 +50,6 @@ class RouteCacheKeyTest {
                 .lowerBound(3.0)
                 .numberPaths(3)
                 .starExclusions(starExcl)
-                .polityExclusions(polityExcl)
                 .build();
     }
 
@@ -227,12 +226,10 @@ class RouteCacheKeyTest {
         @DisplayName("Same exclusions should be equal")
         void sameExclusionsShouldBeEqual() {
             Set<String> starExcl = new HashSet<>(Arrays.asList("M", "L", "T"));
-            Set<String> polityExcl = new HashSet<>(Collections.singletonList("Terran"));
 
-            RouteFindingOptions options1 = createOptionsWithExclusions("Sol", "Alpha Centauri", starExcl, polityExcl);
+            RouteFindingOptions options1 = createOptionsWithExclusions("Sol", "Alpha Centauri", starExcl);
             RouteFindingOptions options2 = createOptionsWithExclusions("Sol", "Alpha Centauri",
-                    new HashSet<>(Arrays.asList("L", "M", "T")), // Different order
-                    new HashSet<>(Collections.singletonList("Terran")));
+                    new HashSet<>(Arrays.asList("L", "M", "T"))); // Different order
 
             RouteCacheKey key1 = RouteCacheKey.fromOptions(options1);
             RouteCacheKey key2 = RouteCacheKey.fromOptions(options2);
@@ -247,8 +244,8 @@ class RouteCacheKeyTest {
             Set<String> starExcl1 = new HashSet<>(Arrays.asList("M", "L"));
             Set<String> starExcl2 = new HashSet<>(Arrays.asList("M", "T"));
 
-            RouteFindingOptions options1 = createOptionsWithExclusions("Sol", "Alpha Centauri", starExcl1, new HashSet<>());
-            RouteFindingOptions options2 = createOptionsWithExclusions("Sol", "Alpha Centauri", starExcl2, new HashSet<>());
+            RouteFindingOptions options1 = createOptionsWithExclusions("Sol", "Alpha Centauri", starExcl1);
+            RouteFindingOptions options2 = createOptionsWithExclusions("Sol", "Alpha Centauri", starExcl2);
 
             RouteCacheKey key1 = RouteCacheKey.fromOptions(options1);
             RouteCacheKey key2 = RouteCacheKey.fromOptions(options2);
@@ -256,20 +253,9 @@ class RouteCacheKeyTest {
             assertNotEquals(key1, key2);
         }
 
-        @Test
-        @DisplayName("Different polity exclusions should not be equal")
-        void differentPolityExclusionsShouldNotBeEqual() {
-            Set<String> polityExcl1 = new HashSet<>(Collections.singletonList("Terran"));
-            Set<String> polityExcl2 = new HashSet<>(Collections.singletonList("Klingon"));
-
-            RouteFindingOptions options1 = createOptionsWithExclusions("Sol", "Alpha Centauri", new HashSet<>(), polityExcl1);
-            RouteFindingOptions options2 = createOptionsWithExclusions("Sol", "Alpha Centauri", new HashSet<>(), polityExcl2);
-
-            RouteCacheKey key1 = RouteCacheKey.fromOptions(options1);
-            RouteCacheKey key2 = RouteCacheKey.fromOptions(options2);
-
-            assertNotEquals(key1, key2);
-        }
+        // Polity-exclusion equality test removed by Worldbuilding Data Model Normalization
+        // task — RouteFindingOptions.polityExclusions and RouteCacheKey's polity slot were
+        // both deleted (constructor went from 8-arg to 7-arg).
 
         @Test
         @DisplayName("Null exclusions should be handled")
@@ -281,7 +267,6 @@ class RouteCacheKeyTest {
                     .lowerBound(3.0)
                     .numberPaths(3)
                     .starExclusions(null)
-                    .polityExclusions(null)
                     .build();
 
             assertDoesNotThrow(() -> RouteCacheKey.fromOptions(options));

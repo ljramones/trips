@@ -30,8 +30,6 @@ public class ToggleDisplayMenuController {
     @FXML
     public CheckMenuItem toggleScaleMenuitem;
     @FXML
-    public CheckMenuItem togglePolitiesMenuitem;
-    @FXML
     public CheckMenuItem toggleStarMenuitem;
     @FXML
     public CheckMenuItem toggleTransitsMenuitem;
@@ -69,10 +67,6 @@ public class ToggleDisplayMenuController {
 
     public void toggleScale(ActionEvent actionEvent) {
         sharedUIFunctions.toggleScale();
-    }
-
-    public void togglePolities(ActionEvent actionEvent) {
-        sharedUIFunctions.togglePolities();
     }
 
     public void toggleStars(ActionEvent actionEvent) {
@@ -113,7 +107,6 @@ public class ToggleDisplayMenuController {
             switch (event.getElement()) {
                 case GRID -> toggleGridMenuitem.setSelected(event.isState());
                 case LABELS -> toggleLabelsMenuitem.setSelected(event.isState());
-                case POLITIES -> togglePolitiesMenuitem.setSelected(event.isState());
                 case STARS -> toggleStarMenuitem.setSelected(event.isState());
                 case ROUTES -> toggleRouteLengthsMenuitem.setSelected(event.isState());
                 case TRANSITS -> toggleTransitLengthsMenuitem.setSelected(event.isState());

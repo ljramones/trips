@@ -124,10 +124,9 @@ public class SolarSystem implements Serializable {
     @Column(length = 2000)
     private String notes;
 
-    /**
-     * Science fiction specific: the polity or faction that controls this system
-     */
-    private String polity;
+    // polity + strategicImportance removed by the Worldbuilding Data Model Normalization
+    // task. F.3 reintroduces faction control via FactionAssignment lookups against the
+    // system's primary star.
 
     /**
      * Science fiction specific: strategic importance rating (1-10)
@@ -193,7 +192,6 @@ public class SolarSystem implements Serializable {
         system.setPrimaryStarId(star.getId());
         system.setDataSetName(star.getDataSetName());
         system.setDistanceFromSol(star.getDistance());
-        system.setPolity(star.getPolity());
         system.setStarCount(1);
         return system;
     }

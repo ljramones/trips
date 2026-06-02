@@ -327,22 +327,8 @@ class RouteFindingServiceTest {
             assertEquals("Sol", pruned.get(0).getStarName());
         }
 
-        @Test
-        @DisplayName("pruneStars removes stars with excluded polity")
-        void pruneStarsRemovesExcludedPolity() {
-            StarDisplayRecord terran = createStar("Sol", 0, 0, 0, "G2V", "Terran");
-            StarDisplayRecord ktor = createStar("Ktor Prime", 1, 1, 1, "G2V", "Ktor");
-            List<StarDisplayRecord> stars = List.of(terran, ktor);
-
-            RouteFindingOptions options = defaultOptionsBuilder()
-                    .polityExclusions(Set.of("Ktor"))
-                    .build();
-
-            List<StarDisplayRecord> pruned = routeFindingService.pruneStars(stars, options);
-
-            assertEquals(1, pruned.size());
-            assertEquals("Sol", pruned.get(0).getStarName());
-        }
+        // pruneStarsRemovesExcludedPolity test removed by Worldbuilding Data Model
+        // Normalization task — RouteFindingOptions.polityExclusions field was deleted.
 
         @Test
         @DisplayName("pruneStars handles null stars in list")

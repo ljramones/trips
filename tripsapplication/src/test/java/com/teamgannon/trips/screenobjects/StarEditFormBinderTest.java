@@ -152,66 +152,9 @@ class StarEditFormBinderTest {
         }
     }
 
-    @Nested
-    @DisplayName("initializeFictionalTab tests")
-    class InitializeFictionalTabTests {
-
-        @Test
-        @DisplayName("should populate polity field")
-        void shouldPopulatePolityField() throws Exception {
-            Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
-
-            AtomicReference<String> fieldText = new AtomicReference<>();
-
-            runOnFxThread(() -> {
-                StarEditViewModel vm = createTestViewModel();
-                vm.setPolity("Terran");
-
-                StarEditFormBinder binder = new StarEditFormBinder(vm);
-
-                TextField polity = new TextField();
-                binder.setFictionalFields(polity, new TextField(), new TextField(),
-                        new TextField(), new TextField(), new TextField(),
-                        new TextField(), new TextField(), new TextField());
-                binder.initializeFictionalTab();
-
-                fieldText.set(polity.getText());
-            });
-
-            assertEquals("Terran", fieldText.get());
-        }
-
-        @Test
-        @DisplayName("should populate all fictional fields")
-        void shouldPopulateAllFictionalFields() throws Exception {
-            Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
-
-            AtomicReference<String> worldText = new AtomicReference<>();
-            AtomicReference<String> fuelText = new AtomicReference<>();
-
-            runOnFxThread(() -> {
-                StarEditViewModel vm = createTestViewModel();
-                vm.setWorldType("Green");
-                vm.setFuelType("H2");
-
-                StarEditFormBinder binder = new StarEditFormBinder(vm);
-
-                TextField world = new TextField();
-                TextField fuel = new TextField();
-
-                binder.setFictionalFields(new TextField(), world, fuel,
-                        new TextField(), new TextField(), new TextField(),
-                        new TextField(), new TextField(), new TextField());
-                binder.initializeFictionalTab();
-
-                worldText.set(world.getText());
-                fuelText.set(fuel.getText());
-            });
-
-            assertEquals("Green", worldText.get());
-            assertEquals("H2", fuelText.get());
-        }
-    }
+    // Fictional-tab binder tests removed by the Worldbuilding Data Model Normalization
+    // task — StarEditFormBinder.setFictionalFields / initializeFictionalTab and the 11
+    // VM fictional fields were all deleted.
 
     @Nested
     @DisplayName("initializeSecondaryTab tests")
@@ -364,9 +307,7 @@ class StarEditFormBinderTest {
                         new TextField("0"), new TextField("0"), new TextField("0"),
                         new TextField("0"), new TextField("0"), new TextField(), new TextArea());
 
-                binder.setFictionalFields(new TextField(), new TextField(), new TextField(),
-                        new TextField(), new TextField(), new TextField(),
-                        new TextField(), new TextField(), new TextField());
+                // setFictionalFields removed by Worldbuilding Data Model Normalization task.
 
                 binder.setUserFields(new CheckBox());
 
@@ -383,27 +324,9 @@ class StarEditFormBinderTest {
             assertEquals("not a number", error.getFieldValue());
         }
 
-        @Test
-        @DisplayName("should collect fictional data")
-        void shouldCollectFictionalData() throws Exception {
-            Assumptions.assumeTrue(javaFxInitialized, "JavaFX not available");
-
-            AtomicReference<String> collectedPolity = new AtomicReference<>();
-
-            runOnFxThread(() -> {
-                StarEditViewModel vm = createTestViewModel();
-                StarEditFormBinder binder = createFullyConfiguredBinder(vm);
-
-                try {
-                    binder.collectAllData();
-                    collectedPolity.set(vm.getPolity());
-                } catch (Exception e) {
-                    // Handle if fields aren't fully configured
-                }
-            });
-
-            assertNotNull(collectedPolity.get());
-        }
+        // shouldCollectFictionalData test removed by Worldbuilding Data Model Normalization
+        // task — view-model polity / world / fuel / tech / port / population / product /
+        // milSpace / milPlan / anomaly / other fields were deleted.
     }
 
     // Helper methods
@@ -487,18 +410,8 @@ class StarEditFormBinderTest {
                 new TextArea()
         );
 
-        // Fictional fields
-        binder.setFictionalFields(
-                new TextField("Terran"),
-                new TextField("Green"),
-                new TextField("H2"),
-                new TextField("5"),
-                new TextField("A"),
-                new TextField("1000s"),
-                new TextField("Industry"),
-                new TextField("B"),
-                new TextField("C")
-        );
+        // Fictional fields helper removed by Worldbuilding Data Model Normalization task —
+        // StarEditFormBinder.setFictionalFields was deleted along with its 9 TextField slots.
 
         // User fields (just the forceLabel checkbox after V5 schema cleanup)
         binder.setUserFields(new CheckBox());

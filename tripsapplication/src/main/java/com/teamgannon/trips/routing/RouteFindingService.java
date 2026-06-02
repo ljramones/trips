@@ -201,7 +201,9 @@ public class RouteFindingService {
     }
 
     /**
-     * Prune stars based on spectral class and polity exclusions.
+     * Prune stars based on spectral class exclusions. Polity-based exclusions removed by the
+     * Worldbuilding Data Model Normalization task. F.3 reintroduces faction-based exclusions
+     * via FactionAssignment.
      *
      * @param starsInView the original list of stars
      * @param options     the options containing exclusions
@@ -210,7 +212,6 @@ public class RouteFindingService {
     public @NotNull List<StarDisplayRecord> pruneStars(@NotNull List<StarDisplayRecord> starsInView,
                                                         @NotNull RouteFindingOptions options) {
         Set<String> starExclusions = options.getStarExclusions();
-        Set<String> polityExclusions = options.getPolityExclusions();
 
         List<StarDisplayRecord> prunedStars = new ArrayList<>();
         for (StarDisplayRecord star : starsInView) {
@@ -225,12 +226,6 @@ public class RouteFindingService {
                 if (starExclusions.contains(spectralType)) {
                     continue;
                 }
-            }
-
-            // Check polity exclusion
-            String polity = star.getPolity();
-            if (polity != null && polityExclusions.contains(polity)) {
-                continue;
             }
 
             prunedStars.add(star);
