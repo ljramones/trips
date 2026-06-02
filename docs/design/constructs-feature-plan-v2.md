@@ -323,6 +323,39 @@ Architecture pins now in place (F.2 specific):
 
 Net F.2 test delta: +136 tests (3,980 → 4,116 after Step 6 invariants land).
 
+### Worldbuilding Data Model Normalization ✅ DONE (2026-06-02)
+
+Discrete cleanup task between F.2 ship and F.3 resumption. Removes the legacy universe-agnostic worldbuilding fields embedded in StarObject and ExoPlanet plus the 14+10 dependent features that filtered/displayed by them. Full design + retroactive close-out at `docs/design/worldbuilding-data-model-normalization.md`.
+
+Per §1.1 reframe: every affected feature was worldbuilding wrongly modeled as universe-agnostic astronomical metadata; all deleted here; F.3+ phases reintroduce in proper universe-scoped form. The interim period is feature-degraded by design — forcing function for F.3 to focus on reintroducing user-visible value.
+
+1. ✅ **Step 1** — Read-only audit. Catalogued every callsite for the 14 enumerated features + verified "stays" fields safe + corrected V19 SQL column names to snake_case (the original design draft used camelCase; would have failed Flyway at runtime). Confirmed `customData1-10` not present on StarObject (no-op). Test impact projected -40 to -120 net.
+2. ✅ **Steps 2+3+4 combined (α path)** — one coherent commit per `44e5468a`. Data layer cleanup (StarWorldBuilding class deleted; 11 StarObject worldbuilding fields + 7 ExoPlanet sci-fi fields gone; V19 migration with snake_case `ALTER TABLE DROP COLUMN`) + 14-feature deletion sweep + the 10 sister selection panels (PolitySelectionPanel + Tech/Fuel/World/Port/Population/MilSpace/MilPlanet/Products/Miscellaneous — surfaced as Step 1 audit gap during implementation; ratified expansion per §1.1 reframe) + Star Polities toolbar chain end-to-end (toolbar.fxml + ToolbarController + SharedUIFunctions + InterstellarSpacePane + StarPlotManager + UIElement.POLITIES enum + GraphEnablesPersist + SharedUIState + ToggleDisplayMenu) + RouteFindingService.getPolityExclusions + RouteCacheKey 8→7 args + route dialog polity tabs + CSV export polity columns + AliasTooltipFormatter "Polity:" line + StarEditDialog Fictional Info tab + StarEditFormBinder + StarEditViewModel + StarEditComboConfig + AddPlanetDialog/PlanetPropertiesDialog Sci-Fi field surfaces + ChView import polity-setting (StarObject.fromChvRecord + AstrographicObjectFactory) + Theme polities + StarPropertiesPane Fictional Info → Worldbuilding tab rename with 13 legacy field rows deleted + gray-out StackPane overlay ("No worldbuilding universe active. Open Worldbuilding → Universes... to activate a universe.") + 12 test files modified + 3 test files deleted. Plus `SolarSystemRepository.findByPolity` derived-query method removed (compile-green but runtime context-init failure — 127 errors from one line).
+3. ✅ **Step 5 close-out** — §14 retroactive doc (commit map, α-path rationale, Step 1 audit gap pattern, derived-query gotcha pattern, 6 discipline patterns, out-of-scope follow-ups, F.3 resumption pin) + this plan-doc rollup.
+
+Architecture pins now in place (post-normalization):
+
+- StarObject is pure astronomical / workflow / provenance — no embedded worldbuilding
+- ExoPlanet is pure astronomical / physical / provenance — no sci-fi fields
+- All worldbuilding data lives in dedicated universe-scoped tables (F.1 Universe, F.2 Alias, F.3+ Faction / Era / etc.)
+- The dual-system framing tax that F.1/F.2/F.3 all carried is gone; subsequent F.x phases compose against a coherent architecture
+- "Worldbuilding" tab in star info panel replaces "Fictional Info"; grays out with actionable overlay when no universes active
+
+Net normalization test delta: -81 tests (4,116 → 4,035; within projected -40 to -120 band).
+
+Discipline patterns reinforced (per §14.5):
+- Combined-commit α path over staged with compat stubs when staged adds dual-life period without benefit
+- Pattern-based sweep in Step 1 audits (grep surrounding package for sister classes when finding a class to delete) — third Step-1-audit-gap instance in the F-series after F.2 and F.3
+- Repository derived-query grep before declaring field deletion done (`findBy*` etc. are runtime failures, not compile failures)
+- Reframe-driven scope expansion via user check-in (path-(a)/(b)/(c) framing) avoids unilateral scope creep
+- Forcing function framing for interim feature degradation sets right expectations
+
+Out-of-scope follow-ups documented (§14.6):
+- SolarSystem.{strategicImportance, totalPopulation, colonized, colonizationYear}
+- SolarSystemFeature.{controllingPolity, population, techLevel, strategicImportance}
+- StarRenderer.createStar `politiesOn` parameter + `pendingPolityNodes` infrastructure cleanup
+- StarObject.misc_num1-5 / misc_text1-5 review
+
 ### Phase F.3 onwards — future Worldbuilding Platform phases
 
 With F.1 + F.2's foundation in place, subsequent F.x phases compose against `Universe` + `UniverseFilteringService` + F.2's `(universeId, targetKind, targetId)` template + the two-layer-uniqueness UX template + the broker-subscribed designer dialog template + the pure-formatter extraction pattern:

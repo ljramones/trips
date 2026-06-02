@@ -785,4 +785,103 @@ Step 2 has settled scope. Implementation can proceed.
 
 ---
 
-*End of design doc. Step 1 audit complete; all 14 features have concrete callsite inventories; V19 SQL corrected to use snake_case columns; customData1-10 confirmed not present. Awaiting Larry's ratification to proceed to Step 2 implementation.*
+---
+
+## §14 — Close-out (retroactive — 2026-06-02)
+
+Task shipped clean. Final state pinned for the historical record.
+
+### §14.1 — Step-by-step commit map
+
+| Step | Commit | Net test delta |
+|------|--------|----------------|
+| Design doc | `01a43e34` | 0 |
+| Step 1 audit findings | `fedffe16` | 0 |
+| Steps 2+3+4 combined (data + features + V19 + UI) | `44e5468a` | -81 |
+| Step 5 close-out (this commit) | — | 0 |
+
+**Suite total:** 4,116 → **4,035** (-81 net; within projected -40 to -120 band per §3.8). F.1 + F.2 invariants stay green throughout.
+
+### §14.2 — Why Steps 2/3/4 combined into one commit (α path)
+
+The design doc's §7 enumerated 5 implementation steps. During Step 2 implementation we hit the boundary problem: deleting the entity fields would cause compile errors in every dependent feature simultaneously, and the dependent features (Step 3) can't be deleted before the field-removal commit lands cleanly. Two paths surfaced:
+
+- **(α) Combined**: data + feature deletion + V19 + UI cleanup in one coherent commit. Compiles green at boundary; one commit captures the full "polity is gone" change.
+- **(β) Staged with compat stubs**: keep StarObject getter/setter accessors returning empty defaults during Step 2; remove in Step 3. Preserves intermediate green-build for staged review.
+
+Ratified path (α). Cleaner commit history; no dual-life period; the feature-deletion sweep was the largest work anyway and combining it with the field-deletion meant one coherent narrative rather than an artificial boundary. Step 4 (UI cleanup — Worldbuilding tab rename + gray-out + dialog cleanup) folded into the same commit since the subagent was already in the FXML files for the broader sweep.
+
+### §14.3 — Step 1 audit gap (pattern worth pinning)
+
+The Step 1 audit's §4 inventory enumerated 14 features but missed **10 sister worldbuilding-flavored selection panels** in the same package as PolitySelectionPanel. Surfaced mid-implementation when the agent was already deleting code:
+
+- `TechSelectionPanel`, `FuelSelectionPanel`, `WorldSelectionPanel`, `PortSelectionPanel`, `PopulationSelectionPanel`, `MilSpaceSelectionPanel`, `MilPlanetSelectionPanel`, `ProductsSelectionPanel`, `MiscellaneousSelectionPanel`, `CategorySelectionPanel` (the last one kept — actually filters `realStars`/`fictionalStars`, not worldbuilding)
+
+Each filtered by a now-deleted field; each was a textbook example of the §1.1 reframe. The audit found them by grepping for "polity" callsites only; it didn't grep the surrounding package for same-pattern names.
+
+**Pattern for future Step 1 audits**: when finding a class to delete, also grep the surrounding package for same-pattern naming (`*SelectionPanel`, `*Dialog`, `*Service` etc.) to surface sister classes that share the same reframe. The "look for siblings of any flagged class" sweep would have caught these 10 panels pre-implementation.
+
+This is the third Step-1-audit-gap instance in the F-series (F.2 had the StatusUpdateEvent publisher count; F.3 had the CatalogProvenance.sourceUniverse content), each surfaced during implementation rather than verification. The methodology refinement applies to all future verifications.
+
+### §14.4 — Repository derived-query gotcha (pattern worth pinning)
+
+After the production code compiled clean and 12 test files were updated, the test suite still surfaced **127 errors** from a single Spring context-init failure:
+
+```
+org.springframework.data.core.PropertyReferenceException:
+  No property 'polity' found for type 'SolarSystem'
+```
+
+Source: `SolarSystemRepository.findByPolity(String polity)` — a derived-query method. The method has no body (Spring Data generates the query at runtime from the method name), so the compiler doesn't catch the dangling property reference. But Spring fails to build the query at context init time, taking down every `@SpringBootTest` / `@DataJpaTest`.
+
+**Pattern for future field deletions**: grep the JPA repositories for `findBy*` / `countBy*` / `existsBy*` / `deleteBy*` references to the deleted field name, not just method-body references. Compile-green is necessary but not sufficient when Spring Data derived queries are in play.
+
+This is the canonical example of a "runtime-only" deletion failure mode. The fix (removing one method, ~lines of code) was trivial; the diagnosis took the longest because the error message buried the actual cause behind 100+ test-context-init stack traces.
+
+### §14.5 — Discipline patterns established or reinforced
+
+1. **Combined-commit α path for entity + feature deletion** when staged-with-stubs (β) would add a dual-life period without test or review benefit. Pattern: prefer one coherent commit over artificial step boundaries.
+
+2. **Pattern-based sweep in Step 1 audits** (§14.3). Grep surrounding package for sister classes when finding a class to delete.
+
+3. **Repository derived-query grep before declaring field deletion done** (§14.4). `findBy*` / `countBy*` etc. are runtime failures, not compile failures.
+
+4. **Reframe-driven scope expansion via user check-in.** When the audit's enumerated scope proves narrower than the reframe principle implies, surface the gap to the user (path-(a)/(b)/(c) options framing) and let them ratify before expanding. Avoids unilateral scope creep.
+
+5. **Forcing function framing for interim feature degradation.** Naming the gap between this task ship and F.3+ ship as "feature-degraded by design — that's the price of the cleanup, and it's a forcing function for F.3 to focus on reintroducing user-visible value" sets the right expectations and prevents premature half-feature reintroductions in this task.
+
+6. **"Fields that stay" three-category framework** (§1.4): worldbuilding (delete), astronomical/workflow (keep), provenance (keep). Clear triage criterion; Step 1 audit verified zero category-boundary surprises.
+
+### §14.6 — Out-of-scope follow-ups surfaced during implementation
+
+These items match the §1.1 reframe but were not in the design doc's enumerated scope. Documented here for future cleanup:
+
+- **`SolarSystem.{strategicImportance, totalPopulation, colonized, colonizationYear}`** — additional worldbuilding fields on SolarSystem beyond the deleted `polity` field. Same shape as the deleted items; should die in a follow-up task.
+
+- **`SolarSystemFeature.{controllingPolity, population, techLevel, strategicImportance}`** — worldbuilding fields on the feature entity. Same shape.
+
+- **`StarRenderer.createStar(... boolean politiesOn ...)` parameter** — the `politiesOn` boolean is now ignored (all callers pass `false`); the `pendingPolityNodes` infrastructure is dead. Could be cleaned up but requires test changes (`drawStellarObject` passthrough used by tests).
+
+- **`StarObject.misc_num1-5` and `misc_text1-5`** — user-extensible miscellaneous fields. Not worldbuilding per se but unstructured catch-all. Architectural review for a future task.
+
+These weren't in scope because the design doc didn't enumerate them; surfacing them as follow-up captures the breadth without expanding mid-task scope.
+
+### §14.7 — Architecture pin for the F.x series
+
+After this task ships, the StarObject + ExoPlanet entities are pure astronomical / workflow / provenance. Worldbuilding data lives exclusively in dedicated universe-scoped tables (F.1 Universe, F.2 Alias, F.3+ Faction / Era / etc.). The dual-system framing tax that F.1, F.2, F.3 all carried disappears: each subsequent F.x phase composes against a coherent architecture instead of working around legacy embedded fields.
+
+The pin for F.3 resumption (§7.4 revisions):
+
+- F.3 §3.2 (StarObject.polity reach) — N/A; field gone
+- F.3 §3.3 + decision #3 path α (Star Polities button refactor) — N/A; button deleted by this task; F.3 introduces fresh control
+- F.3 audit R1 (CatalogProvenance.sourceUniverse mapping) — preserved (CatalogProvenance still exists; F.3 V21 still adds factionId columns)
+- F.3 audit R2 (no-active-universes fallback option (i) — legacy polity coloring) — N/A; no legacy polity to fall back to; new fallback design needed
+- F.3 audit R3 (Star Polities button refactor scope) — N/A; deleted here
+- F.3 audit R5 (CatalogProvenance entity subset) — preserved
+- F.3 audit R6 (lastActivatedAt deactivation semantics) — preserved
+
+F.3's design doc revision happens as part of F.3 resumption (γ-style doc revision before implementation), as the original §7.4 specified.
+
+---
+
+*End of design doc. Shipped 2026-06-02; 4,035 tests passing (-81 from 4,116 F.2 baseline). The forcing function for F.3 is now active.*
